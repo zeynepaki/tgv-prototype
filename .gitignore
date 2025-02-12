@@ -1,0 +1,42 @@
+# tgv-prototype specific ignores
+
+# requests_cache db
+*.sqlite
+
+# default typesense data folder
+typesense-data/
+
+# data folder for txt, html, and hOCR files from remote sources
+data/
+
+
+# any JSONL files produced before insert
+*.jsonl
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
