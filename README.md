@@ -36,6 +36,10 @@ Requires a working installation of Typesense. A `compose.yml` to use with e.g. D
 
 `insert.py` deletes any exisiting Typesense collection, creates a new one, and inserts the documents from the JSON file into the search backend.
 
+### Search frontend
+
+I include a very simple demonstration (thanks to Copilot for Business) of how Typesense integration might look on the frontend. We certainly want to use snippets/highlighted "hits", [which Typesense supports](https://typesense.org/docs/27.1/api/search.html#results-parameters:~:text=wasted%20CPU%20cycles.-,highlight_fields,-no).
+
 ## Usage
 
 ### Install/Setup
@@ -49,9 +53,11 @@ Requires a working installation of Typesense. A `compose.yml` to use with e.g. D
 
 ### Retrieve
 
-Use the scripts `anno.py`, `mdz.py`, and `abo.py` to retrieve data from these sources. The data will be in `data`. Each `.txt` file corresponds to a 
+Use the scripts `anno.py`, `mdz.py`, and `abo.py` to retrieve data from these sources. The data will be in `data`. Each `.txt` file corresponds to a page of a source.
 
-To replicate the corpus from the original study, run the commands in `get_items.sh`. It should be fine to work with a small subset of these for development purposes.
+To replicate the corpus from the original study, run the commands in `get_items.sh`. Alternatively, the pre-downloaded corpus can be found on Teams/OneDrive (untar into `./data`).
+
+It should be fine to work with a small subset of these for development purposes. 
 
 ### Gather
 
