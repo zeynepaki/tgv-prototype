@@ -42,3 +42,5 @@ share/python-wheels/
 MANIFEST
 /.idea
 /venv
+.DS_Store
+data.tar
