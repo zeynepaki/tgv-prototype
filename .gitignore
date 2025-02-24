@@ -44,3 +44,4 @@ MANIFEST
 /venv
 .DS_Store
 data.tar
+frontend/prototype.html
