@@ -1,40 +1,79 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Typesense Search</title>
+    <title>Historical Document Search</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
     <script src="https://cdn.jsdelivr.net/npm/typesense@1.8.2/dist/typesense.min.js"></script>
     <style>
         .card {
-            margin-bottom: 20px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .content {
             display: none;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f5f5f5;
+            border-radius: 4px;
+        }
+        .highlight {
+            background-color: #fff3cd;
+            padding: 0 2px;
+        }
+        .filters {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: #f5f5f5;
+            border-radius: 4px;
+        }
+        .pagination {
+            margin-top: 2rem;
+        }
+        .source-tag {
+            margin-left: 0.5rem;
         }
     </style>
 </head>
 <body>
     <section class="section">
         <div class="container">
-            <h1 class="title">Typesense Integration Example</h1>
-            <div class="field has-addons">
+            <h1 class="title">Historical Document Search</h1>
+            <div class="field">
                 <div class="control">
-                    <input id="search-box" class="input" type="text" placeholder="Search...">
-                </div>
-                <div class="control">
-                    <button id="search-button" class="button is-info">Search</button>
+                    <input id="search-box" class="input is-large" type="text" placeholder="Search historical documents...">
                 </div>
             </div>
+
+            <div class="filters">
+                <div class="field is-grouped">
+                    <div class="control">
+                        <div class="select">
+                            <select id="source-filter">
+                                <option value="">All Sources</option>
+                                <option value="anno.onb.ac.at">ANNO</option>
+                                <option value="api.digitale-sammlungen.de">MDZ</option>
+                                <option value="iiif.onb.ac.at">ABO</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="control">
+                        <input id="results-per-page" class="input" type="number" min="5" max="50" value="10" placeholder="Results per page">
+                    </div>
+                </div>
+            </div>
+
             <div id="results"></div>
+            <div id="pagination" class="pagination is-centered" role="navigation"></div>
         </div>
     </section>
 
     <script>
         const client = new Typesense.Client({
             nodes: [{
-                host: 'localhost',
+                host: '0.0.0.0',
                 port: '8108',
                 protocol: 'http'
             }],
@@ -42,32 +81,52 @@
             connectionTimeoutSeconds: 2
         });
 
-        document.getElementById('search-box').addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                search();
-            }
-        });
+        let currentPage = 1;
 
-        document.getElementById('search-button').addEventListener('click', search);
+        document.getElementById('search-box').addEventListener('input', debounce(search, 300));
+        document.getElementById('source-filter').addEventListener('change', search);
+        document.getElementById('results-per-page').addEventListener('change', search);
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
 
         async function search() {
             const query = document.getElementById('search-box').value;
+            const sourceFilter = document.getElementById('source-filter').value;
+            const perPage = parseInt(document.getElementById('results-per-page').value) || 10;
 
             if (query.length === 0) {
                 document.getElementById('results').innerHTML = '';
+                document.getElementById('pagination').innerHTML = '';
                 return;
             }
 
             const searchParameters = {
                 q: query,
                 query_by: 'ocr_text_original',
-                per_page: 10,
+                per_page: perPage,
+                page: currentPage,
+                highlight_full_fields: 'ocr_text_original',
                 sort_by: '_text_match:desc'
             };
 
+            if (sourceFilter) {
+                searchParameters.filter_by = `source:${sourceFilter}`;
+            }
+
             try {
                 const searchResults = await client.collections('documents').documents().search(searchParameters);
-                displayResults(searchResults.hits);
+                displayResults(searchResults);
+                displayPagination(searchResults.found, perPage);
             } catch (error) {
                 console.error('Search error:', error);
             }
@@ -77,44 +136,91 @@
             const resultsContainer = document.getElementById('results');
             resultsContainer.innerHTML = '';
 
-            results.forEach(result => {
+            if (results.hits.length === 0) {
+                resultsContainer.innerHTML = '<div class="notification is-info">No results found</div>';
+                return;
+            }
+
+            results.hits.forEach(result => {
                 const card = document.createElement('div');
                 card.className = 'card';
 
                 const cardContent = document.createElement('div');
                 cardContent.className = 'card-content';
 
+                const titleContainer = document.createElement('div');
+                titleContainer.className = 'is-flex is-justify-content-space-between is-align-items-center';
+
                 const title = document.createElement('p');
-                title.className = 'title';
-                title.textContent = result.document.title_id + " (" + result.document.page_number + ")";
+                title.className = 'title is-4';
+                title.textContent = `Page ${result.document.page_number}`;
 
-                const snippet = document.createElement('p');
-                snippet.className = 'snippet';
-                snippet.textContent = result.document.ocr_text_original.substring(0, 50) + '...';
+                const sourceTag = document.createElement('span');
+                sourceTag.className = 'tag is-info source-tag';
+                sourceTag.textContent = result.document.source;
 
-                const fullContent = document.createElement('p');
-                fullContent.className = 'content';
-                fullContent.textContent = result.document.ocr_text_original;
+                titleContainer.appendChild(title);
+                titleContainer.appendChild(sourceTag);
 
-                const readMoreButton = document.createElement('button');
-                readMoreButton.className = 'button is-link is-light';
-                readMoreButton.textContent = 'Read more...';
-                readMoreButton.addEventListener('click', () => {
-                    fullContent.style.display = fullContent.style.display === 'none' ? 'block' : 'none';
-                    readMoreButton.textContent = fullContent.style.display === 'none' ? 'Read more...' : 'Read less';
-                });
+                const snippet = document.createElement('div');
+                snippet.className = 'content';
+                snippet.innerHTML = result.highlights[0].snippet;
 
-                const links = document.createElement('p');
-                links.innerHTML = `<a href="${result.document.remote_path}" target="_blank">Remote Path</a> | <a href="${result.document.image_url}" target="_blank">Image URL</a>`;
+                const actions = document.createElement('div');
+                actions.className = 'field is-grouped mt-4';
 
-                cardContent.appendChild(title);
+                const viewButton = document.createElement('p');
+                viewButton.className = 'control';
+                viewButton.innerHTML = `<a href="${result.document.remote_path}" target="_blank" class="button is-link">View Original</a>`;
+
+                const imageButton = document.createElement('p');
+                imageButton.className = 'control';
+                imageButton.innerHTML = `<a href="${result.document.image_url}" target="_blank" class="button is-link is-light">View Image</a>`;
+
+                actions.appendChild(viewButton);
+                actions.appendChild(imageButton);
+
+                cardContent.appendChild(titleContainer);
                 cardContent.appendChild(snippet);
-                cardContent.appendChild(fullContent);
-                cardContent.appendChild(readMoreButton);
-                cardContent.appendChild(links);
+                cardContent.appendChild(actions);
                 card.appendChild(cardContent);
                 resultsContainer.appendChild(card);
             });
+        }
+
+        function displayPagination(total, perPage) {
+            const totalPages = Math.ceil(total / perPage);
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+
+            if (totalPages <= 1) return;
+
+            const nav = document.createElement('nav');
+            nav.className = 'pagination';
+
+            const previousButton = document.createElement('a');
+            previousButton.className = `pagination-previous ${currentPage === 1 ? 'is-disabled' : ''}`;
+            previousButton.textContent = 'Previous';
+            previousButton.onclick = () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    search();
+                }
+            };
+
+            const nextButton = document.createElement('a');
+            nextButton.className = `pagination-next ${currentPage === totalPages ? 'is-disabled' : ''}`;
+            nextButton.textContent = 'Next';
+            nextButton.onclick = () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    search();
+                }
+            };
+
+            nav.appendChild(previousButton);
+            nav.appendChild(nextButton);
+            pagination.appendChild(nav);
         }
     </script>
 </body>
