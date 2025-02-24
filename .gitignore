@@ -44,4 +44,4 @@ MANIFEST
 /venv
 .DS_Store
 data.tar
-
+myAPIKey.txt
