@@ -88,6 +88,8 @@ function displayResults(results) {
         return;
     }
 
+    const query = document.getElementById('search-box').value.trim();
+
     results.hits.forEach(result => {
         const card = document.createElement('div');
         card.className = 'card';
@@ -111,7 +113,20 @@ function displayResults(results) {
 
         const snippet = document.createElement('div');
         snippet.className = 'content';
-        snippet.innerHTML = result.highlights[0].snippet;
+
+        if (result.highlights.length > 0 && result.highlights[0].snippet) {
+            let highlightedSnippet = result.highlights[0].snippet;
+
+            if (query) {
+                const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // Escape regex special characters
+                const regex = new RegExp(`(${escapedQuery})`, 'gi'); // Case-insensitive match
+                highlightedSnippet = highlightedSnippet.replace(regex, '<mark>$1</mark>'); // Highlight occurrences
+            }
+
+            snippet.innerHTML = highlightedSnippet;
+        } else {
+            snippet.textContent = result.document.ocr_text_original.substring(0, 200) + '...'; // Fallback if no highlight
+        }
 
         const actions = document.createElement('div');
         actions.className = 'field is-grouped mt-4';
@@ -126,7 +141,17 @@ function displayResults(results) {
 
         viewFullTextButton.onclick = () => {
             if (result.document.ocr_text_original) {
-                popupContent.innerHTML = `<pre>${result.document.ocr_text_original}</pre>`;
+                const query = document.getElementById('search-box').value.trim();
+
+                if (query) {
+                    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // Escape regex special characters
+                    const regex = new RegExp(`(${escapedQuery})`, 'gi'); // Case-insensitive match
+                    const highlightedText = result.document.ocr_text_original.replace(regex, '<mark>$1</mark>'); // Highlight occurrences
+                    popupContent.innerHTML = `<pre>${highlightedText}</pre>`;
+                } else {
+                    popupContent.innerHTML = `<pre>${result.document.ocr_text_original}</pre>`;
+                }
+
                 popup.style.display = 'block';
                 document.body.style.overflow = 'hidden'; // Disable scrolling when popup is open
             } else {
@@ -142,7 +167,7 @@ function displayResults(results) {
 
         actions.appendChild(viewButton);
         actions.appendChild(imageButton);
-        actions.appendChild(viewFullTextButton)
+        actions.appendChild(viewFullTextButton);
 
         cardContent.appendChild(titleContainer);
         cardContent.appendChild(snippet);
@@ -151,6 +176,7 @@ function displayResults(results) {
         resultsContainer.appendChild(card);
     });
 }
+
 
 function displayPagination(total, perPage) {
     const totalPages = Math.ceil(total / perPage);
