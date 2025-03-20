@@ -4,3 +4,4 @@ Requests==2.32.3
 requests_cache==1.2.1
 tqdm==4.67.1
 typesense==0.21.0
+hocr-tools==1.1.1
