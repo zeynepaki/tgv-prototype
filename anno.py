@@ -36,6 +36,7 @@ def get_text_for_datum(title_id, datum, page_number, session):
     folder = f"data/{SOURCE_ID}/{title_id}/{datum}/txt"
     path_on_disk = folder + '/' + f"{SOURCE_ID}_{title_id}_{datum}.txt"
     utils.download_remote_file(vd_uri, path=path_on_disk, session=session)
+    return path_on_disk
 
 def main():
     parser = argparse.ArgumentParser(description="Fetch text for a given title_id and optional date range.")
@@ -67,7 +68,9 @@ def main():
     
     for vd in tqdm.tqdm(valid_datums):
         if vd not in already:
-            get_text_for_datum(title_id=args.title_id, datum=vd, page_number='x', session=session)
+            path_on_disk = get_text_for_datum(title_id=args.title_id, datum=vd, page_number='x', session=session)
+            utils.split_anno_x_file(path_on_disk, folder + '/' + vd + '/txt')
+            utils.delete_file(path_on_disk)
         else:
             continue
 
