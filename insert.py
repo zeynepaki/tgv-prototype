@@ -31,6 +31,7 @@ def main():
             {'name': 'local_path', 'type': 'string'},
             {'name': 'source', 'type': 'string'},
             {'name': 'title_id', 'type': 'string'},
+            {'name': 'title_full', 'type': 'string'},
             {'name': 'datum', 'type': 'string', 'optional': True},
             {'name': 'page_number', 'type': 'string'},
             {'name': 'remote_path', 'type': 'string'},

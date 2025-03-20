@@ -11,6 +11,11 @@ def process_anno_onb_ac_at(file_path):
     TEXT_URL = "https://anno.onb.ac.at/cgi-content/annoshow?text={title_id}|{datum}|{page_number}"
     IMAGE_URL= "https://anno.onb.ac.at/cgi-content/annoshow?call={title_id}|{datum}|{page_number}|{zoom_level}"
 
+    TITLE_MAP = {
+        'sam': 'Der Sammler. Ein Unterhaltungsblatt',
+        'vlb': 'Vaterländische Blätter'
+    }
+
     parts = file_path.split(os.sep)
     title_id = parts[2]
     datum = parts[3]
@@ -28,6 +33,7 @@ def process_anno_onb_ac_at(file_path):
         "local_path": file_path,
         "source": SOURCE_ID,
         "title_id": title_id,
+        "title_full": TITLE_MAP[title_id],
         "datum": datum,
         "page_number": page_number,
         "remote_path": remote_path,
@@ -46,6 +52,8 @@ def process_api_digitale_sammlungen_de(file_path):
     with open(os.path.join(DATA_DIRECTORY, SOURCE_ID, title_id, 'json', 'manifest.json'), 'r', encoding='utf-8') as file:
         manifest = json.load(file)
     
+    title_full = manifest['label']
+
     remote_path = None
     image_url = None
     for sequence in manifest['sequences']:
@@ -66,6 +74,7 @@ def process_api_digitale_sammlungen_de(file_path):
         "local_path": file_path,
         "source": SOURCE_ID,
         "title_id": title_id,
+        "title_full": title_full,
         "page_number": label,
         "remote_path": remote_path,
         "image_url": image_url,
@@ -85,6 +94,8 @@ def process_iiif_onb_ac_at(file_path):
     with open(os.path.join(DATA_DIRECTORY, SOURCE_ID, project_id, title_id, 'json', 'manifest.json'), 'r', encoding='utf-8') as file:
         manifest = json.load(file)
     
+    title_full = manifest['label']
+
     remote_path = None
     image_url = None
     for sequence in manifest['sequences']:
@@ -109,6 +120,7 @@ def process_iiif_onb_ac_at(file_path):
         "local_path": file_path,
         "source": SOURCE_ID,
         "title_id": title_id,
+        "title_full": title_full,
         "page_number": label,
         "remote_path": remote_path,
         "image_url": image_url,
