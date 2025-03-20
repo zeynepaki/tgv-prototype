@@ -40,3 +40,8 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+/.idea
+/venv
+.DS_Store
+data.tar
+

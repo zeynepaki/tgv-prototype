@@ -1,121 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Typesense Search</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/typesense@1.8.2/dist/typesense.min.js"></script>
-    <style>
-        .card {
-            margin-bottom: 20px;
-        }
-        .content {
-            display: none;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Historical Document Search</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/typesense@1.8.2/dist/typesense.min.js"></script>
 </head>
 <body>
-    <section class="section">
-        <div class="container">
-            <h1 class="title">Typesense Integration Example</h1>
-            <div class="field has-addons">
-                <div class="control">
-                    <input id="search-box" class="input" type="text" placeholder="Search...">
-                </div>
-                <div class="control">
-                    <button id="search-button" class="button is-info">Search</button>
-                </div>
-            </div>
-            <div id="results"></div>
+  <section class="section">
+    <div class="container">
+      <h1 class="title">Historical Document Search</h1>
+      <div class="field">
+        <div class="control">
+          <input id="search-box" class="input is-large" type="text" placeholder="Search historical documents...">
         </div>
-    </section>
+      </div>
 
-    <script>
-        const client = new Typesense.Client({
-            nodes: [{
-                host: 'localhost',
-                port: '8108',
-                protocol: 'http'
-            }],
-            apiKey: 'CHANGE_API_KEY',
-            connectionTimeoutSeconds: 2
-        });
+      <div class="filters">
+        <div class="field is-grouped">
+          <div class="control">
+            <div class="select">
+              <select id="source-filter">
+                <option value="">All Sources</option>
+                <option value="anno.onb.ac.at">ANNO</option>
+                <option value="api.digitale-sammlungen.de">MDZ</option>
+                <option value="iiif.onb.ac.at">ABO</option>
+              </select>
+            </div>
+          </div>
+          <div class="control">
+            <input id="results-per-page" class="input" type="number" min="5" max="50" value="10" placeholder="Results per page">
+          </div>
+        </div>
+      </div>
 
-        document.getElementById('search-box').addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                search();
-            }
-        });
+      <div id="results"></div>
+      <div id="pagination" class="pagination is-centered" role="navigation"></div>
+    </div>
+  </section>
 
-        document.getElementById('search-button').addEventListener('click', search);
-
-        async function search() {
-            const query = document.getElementById('search-box').value;
-
-            if (query.length === 0) {
-                document.getElementById('results').innerHTML = '';
-                return;
-            }
-
-            const searchParameters = {
-                q: query,
-                query_by: 'ocr_text_original',
-                per_page: 10,
-                sort_by: '_text_match:desc'
-            };
-
-            try {
-                const searchResults = await client.collections('documents').documents().search(searchParameters);
-                displayResults(searchResults.hits);
-            } catch (error) {
-                console.error('Search error:', error);
-            }
-        }
-
-        function displayResults(results) {
-            const resultsContainer = document.getElementById('results');
-            resultsContainer.innerHTML = '';
-
-            results.forEach(result => {
-                const card = document.createElement('div');
-                card.className = 'card';
-
-                const cardContent = document.createElement('div');
-                cardContent.className = 'card-content';
-
-                const title = document.createElement('p');
-                title.className = 'title';
-                title.textContent = result.document.title_id + " (" + result.document.page_number + ")";
-
-                const snippet = document.createElement('p');
-                snippet.className = 'snippet';
-                snippet.textContent = result.document.ocr_text_original.substring(0, 50) + '...';
-
-                const fullContent = document.createElement('p');
-                fullContent.className = 'content';
-                fullContent.textContent = result.document.ocr_text_original;
-
-                const readMoreButton = document.createElement('button');
-                readMoreButton.className = 'button is-link is-light';
-                readMoreButton.textContent = 'Read more...';
-                readMoreButton.addEventListener('click', () => {
-                    fullContent.style.display = fullContent.style.display === 'none' ? 'block' : 'none';
-                    readMoreButton.textContent = fullContent.style.display === 'none' ? 'Read more...' : 'Read less';
-                });
-
-                const links = document.createElement('p');
-                links.innerHTML = `<a href="${result.document.remote_path}" target="_blank">Remote Path</a> | <a href="${result.document.image_url}" target="_blank">Image URL</a>`;
-
-                cardContent.appendChild(title);
-                cardContent.appendChild(snippet);
-                cardContent.appendChild(fullContent);
-                cardContent.appendChild(readMoreButton);
-                cardContent.appendChild(links);
-                card.appendChild(cardContent);
-                resultsContainer.appendChild(card);
-            });
-        }
-    </script>
+  <script src="script.js"></script>
 </body>
 </html>
