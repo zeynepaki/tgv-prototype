@@ -17,9 +17,10 @@ def main():
 
     client = typesense.Client({
         'nodes': [{
-            'host': 'localhost',  
-            'port': '8108',       
-            'protocol': 'http'    
+            'host': 'nginx',  
+            'port': '80',       
+            'protocol': 'http',
+            'path': '/api'    
         }],
         'api_key': api_key,
         'connection_timeout_seconds': 2
