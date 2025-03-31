@@ -1,10 +1,11 @@
 const client = new Typesense.Client({
   nodes: [{
-    host: '0.0.0.0',
-    port: '8108',
-    protocol: 'http'
+    host: 'localhost',
+    port: '80',
+    protocol: 'http',
+    path: '/api',
   }],
-  apiKey: 'CHANGE_API_KEY',
+  apiKey: 'API_KEY_GOES_HERE',
   connectionTimeoutSeconds: 2
 });
 
