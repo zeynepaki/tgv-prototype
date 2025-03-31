@@ -44,39 +44,12 @@ I include a very simple demonstration (thanks to Copilot for Business) of how Ty
 
 ### Install/Setup
 
-1. Create a `virtualenv` (tested with Python 3.10.13) and install Python dependencies in `requirements.txt`
-2. Activate the virtual environment
-3. Set the shell environment variable `TYPESENSE_API_KEY` to a strong secret
-4. Run `docker-compose up` from the root of the project directory
-5. (if using) Change the API key in `frontend/index.html` to match the strong secret
-6. (if using) Serve the frontend from the root of `./frontend`
+0. Create a `.env` file with `TYPESENSE_API_KEY=` and your choice of key
+1. Run `docker-compose up` from the root of the project directory
+2. Change the API key in `frontend/index.html` to match the key (TODO: Use envsubst)
+3. Visit application at localhost:80
 
-### Retrieve
+## Design
 
-Use the scripts `anno.py`, `mdz.py`, and `abo.py` to retrieve data from these sources. The data will be in `data`. Each `.txt` file corresponds to a page of a source.
-
-To replicate the corpus from the original study, run the commands in `get_items.sh`. 
-
-It should be fine to work with a small subset of these for development purposes. To get a smaller corpus for testing purposes, run the commands in `get_items_test.sh`.
-
-Alternatively, the pre-downloaded corpus can be found on Teams/OneDrive (untar into `./data`).
-
-### Gather
-
-Once all sources are downloaded, run `gather.py`, which takes as argument(s) a path to a text. 
-
-I use GNU Parallel to quickly do this e.g. (from the project root directory):
-
-```bash
-find data -type f -name "*.txt" | parallel -j 4 -N 64 --bar python gather.py > all.jsonl
-```
-
-We do this because later on we might like to "enrich" the records with various bits of post-processing unrelated to their collection.
-
-### Insert
-
-Finally, use `insert.py`, which takes a path to a newline-delimited JSONL file and inserts each record into the running Typesense instance. For example,
-
-```bash
-python insert.py all.jsonl
+TODO
 ```
