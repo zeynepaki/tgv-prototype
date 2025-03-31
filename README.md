@@ -52,4 +52,3 @@ I include a very simple demonstration (thanks to Copilot for Business) of how Ty
 ## Design
 
 TODO
-```
