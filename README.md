@@ -56,7 +56,9 @@ There are three services defined in compose.yml:
 - `python-fetcher`
 - `typesense`
 
-`nginx` hosts the frontend and reverse proxies `/api' to `/` in `typesense`. The frontend served by `nginx` needs to have an API key to authenticate requests to `typesense` (which also needs to know this API key when launched). This is all arranged in the relevant Dockerfiles, and uses a key-value pair set in `.env` (which is not checked into source control). 
+`nginx` hosts the frontend and reverse proxies `/api` to `/` in `typesense`. 
+
+The frontend served by `nginx` needs to have an API key to authenticate requests to `typesense` (which also needs to know this API key when launched). This is all arranged in the relevant Dockerfiles, and uses a key-value pair set in `.env` (which is not checked into source control). 
 
 `typesense` is the database and is available over HTTP within the docker network `alpha` (this is largely irrelevant for now).
 
