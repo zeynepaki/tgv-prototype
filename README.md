@@ -69,7 +69,7 @@ The frontend served by `nginx` needs to have an API key to authenticate requests
 There are some things that may need to be changed before deployment given the "sidecar" pattern:
 
 - `fetcher/insert.py` assumes that the database (Typesense) is available at `nginx`
-- `frontend` assumes that the database is available on `localhost` at `api`
+- `frontend` assumes that the database is available on `localhost:80` at `./api`
 - `nginx` assumes that `typesense` makes its HTTP API available at on `typesense` at port 8081, which is referenced in `nginx.conf`  
 
 
