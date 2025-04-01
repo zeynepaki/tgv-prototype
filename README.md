@@ -6,15 +6,15 @@ A prototype application to support TGV bid
 
 The project consists of three parts
 
-- a set of scripts to get OCR data and related metadata from a variety of holding libraries
-- scripts to populate a search backend using Typesense
-- a demo frontend against the Typesense API.
+- a set of scripts to get OCR data and related metadata from a variety of holding libraries (in `fetcher/`)
+- scripts to populate a search backend using Typesense (`fetcher/insert.py`)
+- a demo frontend against the Typesense API  (`frontend/`)
 
-It is supported by a number of utility functions.
+It is supported by a number of utility functions (`fetcher/utils.py`)
 
 Most functionality in the Python scripts can be used either as a module or from the command-line.
 
-Typesense hostname, port, and API key needs to be set across a number of scripts.
+It is accompanied by files which specify a containerised application, split over `./compose.yml` and the Dockerfiles in `docker/`.
 
 ### Data and metadata retrieval 
 
