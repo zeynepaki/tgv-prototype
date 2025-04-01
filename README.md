@@ -46,9 +46,28 @@ I include a very simple demonstration (thanks to Copilot for Business) of how Ty
 
 0. Create a `.env` file with `TYPESENSE_API_KEY=` and your choice of key
 1. Run `docker-compose up` from the root of the project directory
-2. Change the API key in `frontend/index.html` to match the key (TODO: Use envsubst)
-3. Visit application at localhost:80
+2. Visit application at localhost:80
 
 ## Design
 
-TODO
+There are three services defined in compose.yml:
+
+- `nginx`
+- `python-fetcher`
+- `typesense`
+
+`nginx` hosts the frontend and reverse proxies `/api' to `/` in `typesense`. The frontend served by `nginx` needs to have an API key to authenticate requests to `typesense` (which also needs to know this API key when launched). This is all arranged in the relevant Dockerfiles, and uses a key-value pair set in `.env` (which is not checked into source control). 
+
+`typesense` is the database and is available over HTTP within the docker network `alpha` (this is largely irrelevant for now).
+
+`python-fetcher` retrieves the data, post-processes it and produces an image containing the data in JSONL format. Every time the container is launched, it inserts the documents from this JSONL file into `typesense` via HTTP. It deletes any existing collections before doing so.
+
+### Notes for deployment to AWH
+
+There are some things that may need to be changed before deployment given the "sidecar" pattern:
+
+- `fetcher/insert.py` assumes that the database (Typesense) is available at `nginx`
+- `frontend` assumes that the database is available on `localhost` at `api`
+- `nginx` assumes that `typesense` makes its HTTP API available at on `typesense` at port 8081, which is referenced in `nginx.conf`  
+
+
