@@ -1,13 +1,4 @@
-const client = new Typesense.Client({
-  nodes: [{
-    host: 'localhost',
-    port: '80',
-    protocol: 'http',
-    path: '/api',
-  }],
-  apiKey: 'API_KEY_GOES_HERE',
-  connectionTimeoutSeconds: 2
-});
+const client = new Typesense.Client(TYPESENSE_CLIENT_CONFIG);
 
 let currentPage = 1;
 
