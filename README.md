@@ -55,9 +55,11 @@ I include a very simple demonstration (thanks to Copilot for Business) of how Ty
 
 Use the scripts `anno.py`, `mdz.py`, and `abo.py` to retrieve data from these sources. The data will be in `data`. Each `.txt` file corresponds to a page of a source.
 
-To replicate the corpus from the original study, run the commands in `get_items.sh`. Alternatively, the pre-downloaded corpus can be found on Teams/OneDrive (untar into `./data`).
+To replicate the corpus from the original study, run the commands in `get_items.sh`. 
 
-It should be fine to work with a small subset of these for development purposes. 
+It should be fine to work with a small subset of these for development purposes. To get a smaller corpus for testing purposes, run the commands in `get_items_test.sh`.
+
+Alternatively, the pre-downloaded corpus can be found on Teams/OneDrive (untar into `./data`).
 
 ### Gather
 

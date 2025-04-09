@@ -78,6 +78,17 @@ def download_remote_file(url, path, session):
     except Exception as e:
         logging.error(f"An error occurred: {e}")
 
+def delete_file(file_path):
+    try:
+        os.remove(file_path)
+        print(f"File '{file_path}' deleted successfully.")
+    except FileNotFoundError:
+        print(f"File '{file_path}' not found.")
+    except PermissionError:
+        print(f"Permission denied to delete '{file_path}'.")
+    except Exception as e:
+        print(f"Error deleting file '{file_path}': {e}")
+
 def remove_newlines(text):
     return text.replace("\n", "")
 
