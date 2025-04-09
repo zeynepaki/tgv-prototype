@@ -14,5 +14,5 @@ RUN /app/get_items_test.sh
 
 RUN find data -type f -name "*.txt" | parallel -j 4 -N 64 --bar python gather.py > all.jsonl
 
-CMD ["sh", "-c", "python insert.py all.jsonl --batch-size 8"]
+CMD ["sh", "-c", "python -u insert.py all.jsonl --wait-for-healthy --batch-size 8"]
 
