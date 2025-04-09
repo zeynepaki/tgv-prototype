@@ -1,16 +1,33 @@
-version: '3.7'
-
 services:
-  typesense:
-    image: typesense/typesense:27.1
-    restart: on-failure
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.nginx
     ports:
-      - "8108:8108"
-    volumes:
-      - ./typesense-data:/data
+      - "127.0.0.1:80:80"
     environment:
-      - TYPESENSE_API_KEY
-    command: >
-      --data-dir /data
-      --api-key=${TYPESENSE_API_KEY}
-      --enable-cors
+      - TYPESENSE_API_KEY=${TYPESENSE_API_KEY}
+    networks:
+      - alpha
+      
+  python-fetcher:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.python-fetcher
+    environment:
+      - TYPESENSE_API_KEY=${TYPESENSE_API_KEY}
+    networks:
+      - alpha
+
+  typesense:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.typesense
+    environment:
+      - TYPESENSE_API_KEY=${TYPESENSE_API_KEY}
+    networks:
+      - alpha
+
+networks:
+  alpha:
+    driver: bridge

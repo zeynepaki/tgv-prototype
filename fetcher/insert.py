@@ -1,14 +1,27 @@
 import argparse
 import json
 import os
+import time
 
 from tqdm import tqdm
 import typesense
+
+def wait_for_healthy(client):
+    while True:
+        try:
+            health = client.operations.is_healthy()
+            if health:
+                print("Typesense service is healthy.")
+                break
+        except Exception as e:
+            print(f"Waiting for Typesense service to be healthy: {e}")
+        time.sleep(2)
 
 def main():
     parser = argparse.ArgumentParser(description='Load JSONL data into a Typesense collection.')
     parser.add_argument('jsonl_file', type=str, help='Path to the JSONL file')
     parser.add_argument('--batch-size', type=int, default=256, help='Number of documents to insert in each batch')
+    parser.add_argument('--wait-for-healthy', action='store_true', help='Wait for Typesense service to be healthy before inserting data')
     args = parser.parse_args()
 
     api_key = os.getenv('TYPESENSE_API_KEY')
@@ -17,13 +30,17 @@ def main():
 
     client = typesense.Client({
         'nodes': [{
-            'host': 'localhost',  
-            'port': '8108',       
-            'protocol': 'http'    
+            'host': 'nginx',  
+            'port': '80',       
+            'protocol': 'http',
+            'path': '/api'    
         }],
         'api_key': api_key,
         'connection_timeout_seconds': 2
     })
+
+    if args.wait_for_healthy:
+        wait_for_healthy(client)
 
     schema = {
         'name': 'documents',

@@ -6,15 +6,15 @@ A prototype application to support TGV bid
 
 The project consists of three parts
 
-- a set of scripts to get OCR data and related metadata from a variety of holding libraries
-- scripts to populate a search backend using Typesense
-- a demo frontend against the Typesense API.
+- a set of scripts to get OCR data and related metadata from a variety of holding libraries (in `fetcher/`)
+- scripts to populate a search backend using Typesense (`fetcher/insert.py`)
+- a demo frontend against the Typesense API  (`frontend/`)
 
-It is supported by a number of utility functions.
+It is supported by a number of utility functions (`fetcher/utils.py`)
 
 Most functionality in the Python scripts can be used either as a module or from the command-line.
 
-Typesense hostname, port, and API key needs to be set across a number of scripts.
+It is accompanied by files which specify a containerised application, split over `./compose.yml` and the Dockerfiles in `docker/`.
 
 ### Data and metadata retrieval 
 
@@ -44,39 +44,32 @@ I include a very simple demonstration (thanks to Copilot for Business) of how Ty
 
 ### Install/Setup
 
-1. Create a `virtualenv` (tested with Python 3.10.13) and install Python dependencies in `requirements.txt`
-2. Activate the virtual environment
-3. Set the shell environment variable `TYPESENSE_API_KEY` to a strong secret
-4. Run `docker-compose up` from the root of the project directory
-5. (if using) Change the API key in `frontend/index.html` to match the strong secret
-6. (if using) Serve the frontend from the root of `./frontend`
+0. Create a `.env` file with `TYPESENSE_API_KEY=` and your choice of key
+1. Run `docker-compose up` from the root of the project directory
+2. Visit application at localhost:80
 
-### Retrieve
+## Design
 
-Use the scripts `anno.py`, `mdz.py`, and `abo.py` to retrieve data from these sources. The data will be in `data`. Each `.txt` file corresponds to a page of a source.
+There are three services defined in compose.yml:
 
-To replicate the corpus from the original study, run the commands in `get_items.sh`. 
+- `nginx`
+- `python-fetcher`
+- `typesense`
 
-It should be fine to work with a small subset of these for development purposes. To get a smaller corpus for testing purposes, run the commands in `get_items_test.sh`.
+`nginx` hosts the frontend and reverse proxies `/api` to `/` in `typesense`. 
 
-Alternatively, the pre-downloaded corpus can be found on Teams/OneDrive (untar into `./data`).
+The frontend served by `nginx` needs to have an API key to authenticate requests to `typesense` (which also needs to know this API key when launched). This is all arranged in the relevant Dockerfiles, and uses a key-value pair set in `.env` (which is not checked into source control). 
 
-### Gather
+`typesense` is the database and is available over HTTP within the docker network `alpha` (this is largely irrelevant for now).
 
-Once all sources are downloaded, run `gather.py`, which takes as argument(s) a path to a text. 
+`python-fetcher` retrieves the data, post-processes it and produces an image containing the data in JSONL format. Every time the container is launched, it inserts the documents from this JSONL file into `typesense` via HTTP. It deletes any existing collections before doing so.
 
-I use GNU Parallel to quickly do this e.g. (from the project root directory):
+### Notes for deployment to AWH
 
-```bash
-find data -type f -name "*.txt" | parallel -j 4 -N 64 --bar python gather.py > all.jsonl
-```
+There are some things that may need to be changed before deployment given the "sidecar" pattern:
 
-We do this because later on we might like to "enrich" the records with various bits of post-processing unrelated to their collection.
+- `fetcher/insert.py` assumes that the database (Typesense) is available at `nginx`
+- `frontend` assumes that the database is available on `localhost:80` at `./api`
+- `nginx` assumes that `typesense` makes its HTTP API available at on `typesense` at port 8081, which is referenced in `nginx.conf`  
 
-### Insert
 
-Finally, use `insert.py`, which takes a path to a newline-delimited JSONL file and inserts each record into the running Typesense instance. For example,
-
-```bash
-python insert.py all.jsonl
-```
