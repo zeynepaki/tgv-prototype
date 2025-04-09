@@ -48,6 +48,30 @@ I include a very simple demonstration (thanks to Copilot for Business) of how Ty
 1. Run `docker-compose up` from the root of the project directory
 2. Visit application at localhost:80
 
+#### Fetching and loading the full corpus
+
+Currently, the application fetches, gathers, and loads a very small sample of the total corpus, which is useful for testing purposes. To load the full corpus, make changes to `docker/Dockerfile.python-fetcher` so that it resembles the below:
+
+```dockerfile
+FROM python:3.10.13
+
+RUN apt-get update && apt-get install -y parallel findutils
+
+WORKDIR /app
+
+COPY ../fetcher /app
+
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir -r requirements.txt
+
+RUN chmod +x /app/get_items.sh
+RUN /app/get_items.sh
+
+RUN find data -type f -name "*.txt" | parallel -j 8 -N 64 "python gather.py {} || true" > all.jsonl
+
+CMD ["sh", "-c", "python -u insert.py all.jsonl --wait-for-healthy --batch-size 8"]
+```
+
 ## Design
 
 There are three services defined in compose.yml:
@@ -70,6 +94,6 @@ There are some things that may need to be changed before deployment given the "s
 
 - `fetcher/insert.py` assumes that the database (Typesense) is available at `nginx`
 - `frontend` assumes that the database is available on `localhost:80` at `./api`
-- `nginx` assumes that `typesense` makes its HTTP API available at on `typesense` at port 8081, which is referenced in `nginx.conf`  
+- `nginx` assumes that `typesense` makes its HTTP API available at on `typesense` at port 8081, which is referenced in `nginx.conf`
 
 
