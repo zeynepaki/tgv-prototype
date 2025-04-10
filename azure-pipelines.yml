@@ -1,29 +1,158 @@
-# Docker
-# Build a Docker image
-# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+# TGV Docker Deployment to AWH
+
+# Add steps that run tests, save build artifacts, deploy, and more:
+# https://learn.microsoft.com/en-gb/azure/devops/pipelines/ecosystems/containers/acr-template
 
 trigger:
 - main
+
+pr: none
+
+pool:
+# we need an agent which has Docker installed
+ name: Default
+ demands:
+ - Agent.Name -equals vmlsha1
 
 resources:
 - repo: self
 
 variables:
-  tag: '$(Build.BuildId)'
+  - group: arc-germanvoice-deployment
 
-stages:
-- stage: Build
-  displayName: Build image
-  jobs:
-  - job: Build
-    displayName: Build
-    pool:
-      vmImage: ubuntu-latest
+  # Azure container registry connection details
+  - name: azureSubscription
+    value: 'svc-con-awh-01'
+  - name: dockerRegistryServiceConnection 
+    value: 'duuksawhacr01'
+  - name: dockerRegistryServerURL
+    value: 'duuksawhacr01.azurecr.io'
+
+  # Dockerfiles to build
+  - name: dockerfile-nginx
+    value: 'docker/Dockerfile.nginx'
+  - name: dockerfile-fetcher
+    value: 'docker/Dockerfile.python-fetcher'
+
+  # Docker Image Names (under arc/ namespace)
+  - name: dockerNamespace
+    value: 'arc'
+  - name: tag
+    value: 'latest'
+
+  - name: image-nginx
+    value: 'tgv-nginx'
+  - name: image-fetcher
+    value: 'tgv-fetcher'
+    
+  # Sidecar container app name
+  # This is the name of the app service which will run the sidecar container on Azure ASE
+  # The app service is created in the resource group specified below
+  - name: appName
+    value: 'duuksawharc-germanvoice01'
+  # Resource Group
+  - name: appResourceGroupName
+    value: 'du-uks-awh-arc-germanvoice-rg'
+
+jobs:
+  - job: build
+    displayName: Build TGV Prototype Application
+
     steps:
-    - task: Docker@2
-      displayName: Build an image
-      inputs:
-        command: build
-        dockerfile: '$(Build.SourcesDirectory)/docker/Dockerfile.nginx'
-        tags: |
-          $(tag)
+      - task: Docker@2
+        displayName: Login to ACR
+        inputs:
+          command: 'login'
+          containerRegistry: '$(dockerRegistryServiceConnection)'
+
+      # Set commit hash variables: these will be used to tag docker images
+      # Then, pull existing layers from the docker container registry server, to use as build cache
+      - script: |
+          echo "##vso[task.setvariable variable=commitHash-base;]`git rev-parse --short HEAD`"
+          
+          echo "##vso[task.setvariable variable=commitHash-nginx;]`git --no-pager log -n 1 --pretty=format:%h -- $(dockerfile-nginx)`"
+          echo "##vso[task.setvariable variable=commitHash-fetcher;]`git --no-pager log -n 1 --pretty=format:%h -- $(dockerfile-fetcher)`"
+          
+          docker pull $(dockerRegistryServerURL)/$(dockerNamespace)/$(image-nginx):latest
+          docker pull $(dockerRegistryServerURL)/$(dockerNamespace)/$(image-fetcher):latest
+
+        displayName: Pull latest for layer caching
+        continueOnError: true # for first build, no cache
+
+      ##########################################
+      # Docker build tasks:
+
+      # Build the nginx server used to serve static assets
+      - task: Docker@2
+        displayName: "TGV Nginx: Build image"
+        inputs:
+          command: 'build'
+          repository: "$(dockerNamespace)/$(image-nginx)"
+          dockerfile: "$(dockerfile-nginx)"
+          containerRegistry: "$(dockerRegistryServiceConnection)"
+          buildContext: $(Build.Repository.LocalPath)
+          arguments: |
+            --cache-from=$(dockerRegistryServerURL)/$(dockerNamespace)/$(image-nginx):latest
+          tags: |
+            $(tag)
+            $(commitHash-nginx)
+
+      - task: Docker@2
+        displayName: "TGV Nginx: Push image"
+        inputs:
+          command: push
+          containerRegistry: "$(dockerRegistryServiceConnection)"
+          repository: "$(dockerNamespace)/$(image-nginx)"
+          tags: |
+            $(tag)
+            $(commitHash-nginx)
+
+      # Build Python fetcher image for TGV python scripts
+      - task: Docker@2
+        displayName: "TGV Python Fetcher: Build image"
+        inputs:
+          command: 'build'
+          repository: "$(dockerNamespace)/$(image-fetcher)"
+          dockerfile: "$(dockerfile-fetcher)"
+          containerRegistry: "$(dockerRegistryServiceConnection)"
+          buildContext: $(Build.Repository.LocalPath)
+          arguments: |
+            --cache-from=$(dockerRegistryServerURL)/$(dockerNamespace)/$(image-fetcher):latest
+          tags: |
+            $(tag)
+            $(commitHash-fetcher)
+
+      - task: Docker@2
+        displayName: "TGV Python Fetcher: Push image"
+        inputs:
+          command: push
+          containerRegistry: "$(dockerRegistryServiceConnection)"
+          repository: "$(dockerNamespace)/$(image-fetcher)"
+          tags: |
+            $(tag)
+            $(commitHash-fetcher)
+
+
+  - job: release
+    dependsOn: build
+    displayName: Release to Azure App Service Environment
+    steps:
+
+      - task: AzureAppServiceSettings@1
+        displayName: Set App Settings for TGV Sidecar app
+        inputs:
+          azureSubscription: '$(azureSubscription)'
+          appName: '$(appName)'
+          resourceGroupName: '$(appResourceGroupName)'
+          appSettings: |
+            [
+              { "name": "TYPESENSE_API_KEY", "value": "$(TYPESENSE_API_KEY)" },
+              { "name": "TYPESENSE_DATA_DIR", "value": "$(TYPESENSE_DATA_DIR)" }
+            ]
+
+      - task: AzureAppServiceManage@0
+        displayName: Restart Sidecar App (germanvoice.awh.durham.ac.uk)
+        inputs:
+          azureSubscription: 'svc-con-awh-01'
+          Action: 'Restart Azure App Service'
+          WebAppName: $(appName)
