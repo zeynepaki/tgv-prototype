@@ -77,7 +77,6 @@ jobs:
           docker pull $(dockerRegistryServerURL)/$(dockerNamespace)/$(image-fetcher):latest
 
           docker pull nginx:latest
-          docker pull typesense/typesense:27.1
         displayName: Pull latest for layer caching
         continueOnError: true # for first build, no cache
 
@@ -121,7 +120,6 @@ jobs:
           buildContext: $(Build.Repository.LocalPath)
           arguments: |
             --cache-from=$(dockerRegistryServerURL)/$(dockerNamespace)/$(image-fetcher):latest
-            --cache-from=typesense/typesense:27.1
           tags: |
             $(tag)
             $(commitHash-fetcher)
@@ -151,7 +149,8 @@ jobs:
           appSettings: |
             [
               { "name": "TYPESENSE_API_KEY", "value": "$(TYPESENSE_API_KEY)" },
-              { "name": "TYPESENSE_DATA_DIR", "value": "$(TYPESENSE_DATA_DIR)" }
+              { "name": "TYPESENSE_DATA_DIR", "value": "$(TYPESENSE_DATA_DIR)" },
+              { "name": "TYPESENSE_HOST", "value": "127.0.0.1"}
             ]
 
       - task: AzureAppServiceManage@0
