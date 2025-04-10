@@ -49,7 +49,7 @@ variables:
   # This is the name of the app service which will run the sidecar container on Azure ASE
   # The app service is created in the resource group specified below
   - name: appName
-    value: 'duuksawharc-germanvoice01'
+    value: 'duuksawharc-germanvoice-01'
   # Resource Group
   - name: appResourceGroupName
     value: 'du-uks-awh-arc-germanvoice-rg'
@@ -76,6 +76,8 @@ jobs:
           docker pull $(dockerRegistryServerURL)/$(dockerNamespace)/$(image-nginx):latest
           docker pull $(dockerRegistryServerURL)/$(dockerNamespace)/$(image-fetcher):latest
 
+          docker pull nginx:latest
+          docker pull typesense/typesense:27.1
         displayName: Pull latest for layer caching
         continueOnError: true # for first build, no cache
 
@@ -93,6 +95,7 @@ jobs:
           buildContext: $(Build.Repository.LocalPath)
           arguments: |
             --cache-from=$(dockerRegistryServerURL)/$(dockerNamespace)/$(image-nginx):latest
+            --cache-from=nginx:latest
           tags: |
             $(tag)
             $(commitHash-nginx)
@@ -118,6 +121,7 @@ jobs:
           buildContext: $(Build.Repository.LocalPath)
           arguments: |
             --cache-from=$(dockerRegistryServerURL)/$(dockerNamespace)/$(image-fetcher):latest
+            --cache-from=typesense/typesense:27.1
           tags: |
             $(tag)
             $(commitHash-fetcher)
