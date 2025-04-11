@@ -33,6 +33,8 @@ variables:
     value: 'docker/Dockerfile.nginx'
   - name: dockerfile-fetcher
     value: 'docker/Dockerfile.python-fetcher'
+  - name: dockerfile-typesense
+    value: 'docker/Dockerfile.typesense'
 
   # Docker Image Names (under arc/ namespace)
   - name: dockerNamespace
@@ -44,6 +46,8 @@ variables:
     value: 'tgv-nginx'
   - name: image-fetcher
     value: 'tgv-fetcher'
+  - name: image-typesense
+    value: 'tgv-typesense'
     
   # Sidecar container app name
   # This is the name of the app service which will run the sidecar container on Azure ASE
@@ -72,11 +76,15 @@ jobs:
           
           echo "##vso[task.setvariable variable=commitHash-nginx;]`git --no-pager log -n 1 --pretty=format:%h -- $(dockerfile-nginx)`"
           echo "##vso[task.setvariable variable=commitHash-fetcher;]`git --no-pager log -n 1 --pretty=format:%h -- $(dockerfile-fetcher)`"
+          echo "##vso[task.setvariable variable=commitHash-fetcher;]`git --no-pager log -n 1 --pretty=format:%h -- $(dockerfile-typesense)`"
           
           docker pull $(dockerRegistryServerURL)/$(dockerNamespace)/$(image-nginx):latest
           docker pull $(dockerRegistryServerURL)/$(dockerNamespace)/$(image-fetcher):latest
+          docker pull $(dockerRegistryServerURL)/$(dockerNamespace)/$(image-typesense):latest
 
           docker pull nginx:latest
+          docker pull typesense/typesense:$(TYPESENSE_VERSION)
+
         displayName: Pull latest for layer caching
         continueOnError: true # for first build, no cache
 
@@ -133,6 +141,33 @@ jobs:
           tags: |
             $(tag)
             $(commitHash-fetcher)
+
+      # Build Python fetcher image for TGV python scripts
+      - task: Docker@2
+        displayName: "TGV Typesense: Build image"
+        inputs:
+          command: 'build'
+          repository: "$(dockerNamespace)/$(image-typesense)"
+          dockerfile: "$(dockerfile-typesense)"
+          containerRegistry: "$(dockerRegistryServiceConnection)"
+          buildContext: $(Build.Repository.LocalPath)
+          arguments: |
+            --cache-from=$(dockerRegistryServerURL)/$(dockerNamespace)/$(image-typesense):latest
+            --build-arg TYPESENSE_VERSION=$(TYPESENSE_VERSION)
+            --build-arg TYPESENSE_DATA_DIR=$(TYPESENSE_DATA_DIR)
+          tags: |
+            $(tag)
+            $(commitHash-typesense)
+
+      - task: Docker@2
+        displayName: "TGV Typesense: Push image"
+        inputs:
+          command: push
+          containerRegistry: "$(dockerRegistryServiceConnection)"
+          repository: "$(dockerNamespace)/$(image-typesense)"
+          tags: |
+            $(tag)
+            $(commitHash-typesense)
 
 
   - job: release
