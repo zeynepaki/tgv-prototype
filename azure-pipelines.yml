@@ -153,6 +153,7 @@ jobs:
           buildContext: $(Build.Repository.LocalPath)
           arguments: |
             --cache-from=$(dockerRegistryServerURL)/$(dockerNamespace)/$(image-typesense):latest
+            --cache-from=typesense/typesense:$(TYPESENSE_VERSION)
             --build-arg TYPESENSE_VERSION=$(TYPESENSE_VERSION)
             --build-arg TYPESENSE_DATA_DIR=$(TYPESENSE_DATA_DIR)
           tags: |
@@ -183,6 +184,7 @@ jobs:
           resourceGroupName: '$(appResourceGroupName)'
           appSettings: |
             [
+              { "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE", "value": "true" },
               { "name": "TYPESENSE_API_KEY", "value": "$(TYPESENSE_API_KEY)" },
               { "name": "TYPESENSE_DATA_DIR", "value": "$(TYPESENSE_DATA_DIR)" },
               { "name": "TYPESENSE_HOST", "value": "127.0.0.1"}
