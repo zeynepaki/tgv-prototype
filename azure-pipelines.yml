@@ -76,7 +76,7 @@ jobs:
           
           echo "##vso[task.setvariable variable=commitHash-nginx;]`git --no-pager log -n 1 --pretty=format:%h -- $(dockerfile-nginx)`"
           echo "##vso[task.setvariable variable=commitHash-fetcher;]`git --no-pager log -n 1 --pretty=format:%h -- $(dockerfile-fetcher)`"
-          echo "##vso[task.setvariable variable=commitHash-fetcher;]`git --no-pager log -n 1 --pretty=format:%h -- $(dockerfile-typesense)`"
+          echo "##vso[task.setvariable variable=commitHash-typesense;]`git --no-pager log -n 1 --pretty=format:%h -- $(dockerfile-typesense)`"
           
           docker pull $(dockerRegistryServerURL)/$(dockerNamespace)/$(image-nginx):latest
           docker pull $(dockerRegistryServerURL)/$(dockerNamespace)/$(image-fetcher):latest
