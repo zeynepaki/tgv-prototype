@@ -6,6 +6,7 @@ import logging
 import subprocess
 import argparse
 import requests
+from tqdm import tqdm
 
 from requests.exceptions import ConnectionError, HTTPError
 from urllib.parse import urlparse, parse_qs
@@ -41,7 +42,7 @@ def hocr_to_txt(hocr_file, txt_file):
 
 def convert_all_hocr_files(input_dir, output_dir):
     os.makedirs(output_dir, exist_ok=True)
-    for filename in os.listdir(input_dir):
+    for filename in tqdm(os.listdir(input_dir), desc="Converting hocr"):
         if filename.endswith('.hocr'):
             hocr_file = os.path.join(input_dir, filename)
             txt_filename = filename.replace('.hocr', '.txt')
