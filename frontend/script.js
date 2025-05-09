@@ -1,4 +1,19 @@
-const client = new Typesense.Client(TYPESENSE_CLIENT_CONFIG);
+async function loadConfig() {
+    try {
+        const response = await fetch('/config.js');
+        const scriptText = await response.text();
+        const config = eval(scriptText + '; TYPESENSE_CLIENT_CONFIG;');
+        return new Typesense.Client(config);
+    } catch (error) {
+        console.error('Failed to load Typesense client config:', error);
+        throw error;
+    }
+}
+
+let client;
+loadConfig().then(tsClient => {
+    client = tsClient;
+});
 
 let currentPage = 1;
 
