@@ -1,10 +1,10 @@
 const TYPESENSE_CLIENT_CONFIG = {
     nodes: [{
-      host: 'localhost',
-      port: '80',
-      protocol: 'http',
-      path: '/api',
+        host: '${TYPESENSE_HOST}',
+        port: '${TYPESENSE_PORT}',
+        protocol: '${TYPESENSE_PROTOCOL}',
+        path: '${TYPESENSE_PATH}',
     }],
     apiKey: '${TYPESENSE_API_KEY}',
     connectionTimeoutSeconds: 2
-  };
+};
