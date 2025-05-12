@@ -8,5 +8,3 @@ const TYPESENSE_CLIENT_CONFIG = {
     apiKey: '${TYPESENSE_API_KEY}', 
     connectionTimeoutSeconds: 2 
 };
-
-export default TYPESENSE_CLIENT_CONFIG;
