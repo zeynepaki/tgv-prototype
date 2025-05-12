@@ -34,7 +34,7 @@ We used `requests_cache` during development to help reduce the number of request
 
 Requires a working installation of Typesense. A `compose.yml` to use with e.g. Docker Compose is provided for convenience.
 
-`insert.py` deletes any exisiting Typesense collection, creates a new one, and inserts the documents from the JSON file into the search backend.
+`insert.py` deletes any existing Typesense collection, creates a new one, and inserts the documents from the JSON file into the search backend.
 
 ### Search frontend
 
@@ -44,32 +44,52 @@ I include a very simple demonstration (thanks to Copilot for Business) of how Ty
 
 ### Install/Setup
 
-0. Create a `.env` file with `TYPESENSE_API_KEY=` and your choice of key
+0. Create a `.env` file (see samples below)
 1. Run `docker-compose up` from the root of the project directory
 2. Visit application at localhost:80
+
+### Development 
+
+Some useful commands
+
+- `docker-compose build --no-cache [SERVICE_NAME]` to rebuild images from scratch
+- `docker-compose up --recreate [SERVICE_NAME]` to start application and/or individual services (and their dependencies), recreating the containers without rebuilding the images. Useful if `compose.yml` has changed.
+
+It is important to keep track of when environment variables are being "injected" into the application. Sometimes it is done during the image build and other times it is done during runtime.
+
+#### Sample `.env` file for local testing
+
+```bash
+TYPESENSE_API_KEY=
+TYPESENSE_HOST=localhost
+TYPESENSE_UPSTREAM_HOST=typesense
+TYPESENSE_PORT=80
+TYPESENSE_PROTOCOL=http
+TYPESENSE_PATH="/api"
+```
+
+#### Sample `.env` file for deployment to AWH
+
+Untested but should be 
+
+```bash
+TYPESENSE_API_KEY=
+TYPESENSE_HOST=localhost
+TYPESENSE_UPSTREAM_HOST=localhost
+TYPESENSE_PORT=80
+TYPESENSE_PROTOCOL=http
+TYPESENSE_PATH="/api"
+```
 
 #### Fetching and loading the full corpus
 
 Currently, the application fetches, gathers, and loads a very small sample of the total corpus, which is useful for testing purposes. To load the full corpus, make changes to `docker/Dockerfile.python-fetcher` so that it resembles the below:
 
 ```dockerfile
-FROM python:3.10.13
-
-RUN apt-get update && apt-get install -y parallel findutils
-
-WORKDIR /app
-
-COPY ../fetcher /app
-
-RUN pip install --upgrade pip
-RUN pip install --no-cache-dir -r requirements.txt
-
+...
 RUN chmod +x /app/get_items.sh
 RUN /app/get_items.sh
-
-RUN find data -type f -name "*.txt" | parallel -j 8 -N 64 "python gather.py {} || true" > all.jsonl
-
-CMD ["sh", "-c", "python -u insert.py all.jsonl --wait-for-healthy --batch-size 8"]
+...
 ```
 
 ## Design
@@ -82,7 +102,7 @@ There are three services defined in compose.yml:
 
 `nginx` hosts the frontend and reverse proxies `/api` to `/` in `typesense`. 
 
-The frontend served by `nginx` needs to have an API key to authenticate requests to `typesense` (which also needs to know this API key when launched). This is all arranged in the relevant Dockerfiles, and uses a key-value pair set in `.env` (which is not checked into source control). 
+The frontend served by `nginx` needs to have an API key to authenticate requests to `typesense` (which also needs to know this API key when launched). This is all arranged in the relevant Dockerfiles, and uses key-value pairs set in `.env` (which is not checked into source control). 
 
 `typesense` is the database and is available over HTTP within the docker network `alpha` (this is largely irrelevant for now).
 
@@ -90,10 +110,9 @@ The frontend served by `nginx` needs to have an API key to authenticate requests
 
 ### Notes for deployment to AWH
 
-There are some things that may need to be changed before deployment given the "sidecar" pattern:
+There are some things to note before deployment to AHW given the "sidecar" pattern:
 
-- `fetcher/insert.py` assumes that the database (Typesense) is available at `nginx`
-- `frontend` assumes that the database is available on `localhost:80` at `./api`
-- `nginx` assumes that `typesense` makes its HTTP API available at on `typesense` at port 8081, which is referenced in `nginx.conf`
-
-
+- `fetcher/insert.py` assumes that the database (Typesense) is available at `nginx` (hard-coded for the moment)
+- `frontend` assumes that the database API is available at `${TYPESENSE_HOST}:${TYPESENSE_PORT}` under `${TYPESENSE_PATH}` (typically `/api`)
+- `nginx` assumes that `typesense` makes its HTTP API available at on `$TYPESENSE_UPSTREAM_HOST}` at port 8081, which is referenced in `nginx.conf`
+    - This implies that `TYPESENSE_UPSTREAM_HOST` needs changing when deploying to AHW 
