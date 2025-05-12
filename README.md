@@ -61,23 +61,29 @@ It is important to keep track of when environment variables are being "injected"
 
 ```bash
 TYPESENSE_API_KEY=
+# The hostname for typesense as viewed by the frontend
 TYPESENSE_HOST=localhost
+# The hostname for typesense as viewed by ngnix (working as a reverse proxy within the Docker network)
 TYPESENSE_UPSTREAM_HOST=typesense
+# The hostname for typesense as viewed by the python-fetcher service (which goes via the reverse proxy)
+TYPESENSE_FETCHER_HOST=nginx
 TYPESENSE_PORT=80
 TYPESENSE_PROTOCOL=http
 TYPESENSE_PATH="/api"
+
 ```
 
 #### Sample `.env` file for deployment to AWH
 
-Untested but should be 
+UNTESTED!
 
 ```bash
 TYPESENSE_API_KEY=
-TYPESENSE_HOST=localhost
+TYPESENSE_HOST=
 TYPESENSE_UPSTREAM_HOST=localhost
+TYPESENSE_FETCHER_HOST=localhost
 TYPESENSE_PORT=80
-TYPESENSE_PROTOCOL=http
+TYPESENSE_PROTOCOL=https
 TYPESENSE_PATH="/api"
 ```
 
