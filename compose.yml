@@ -21,6 +21,10 @@ services:
       dockerfile: docker/Dockerfile.python-fetcher
     environment:
       - TYPESENSE_API_KEY=${TYPESENSE_API_KEY}
+      - TYPESENSE_FETCHER_HOST=${TYPESENSE_FETCHER_HOST}
+      - TYPESENSE_PORT=${TYPESENSE_PORT}
+      - TYPESENSE_PROTOCOL=${TYPESENSE_PROTOCOL}
+      - TYPESENSE_PATH=${TYPESENSE_PATH}
     networks:
       - alpha
 

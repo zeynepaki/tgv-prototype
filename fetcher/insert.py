@@ -28,12 +28,29 @@ def main():
     if not api_key:
         raise ValueError("TYPESENSE_API_KEY environment variable is not set")
 
+    typesense_port = os.getenv('TYPESENSE_PORT')
+    if not typesense_port:
+        raise ValueError("TYPESENSE_PORT environment variable is not set")
+    
+    typesense_protocol = os.getenv('TYPESENSE_PROTOCOL')
+    if not typesense_protocol:
+        raise ValueError("TYPESENSE_PROTOCOL environment variable is not set")
+
+    typesense_path = os.getenv('TYPESENSE_PATH')
+    if not typesense_path:
+        raise ValueError("TYPESENSE_PATH environment variable is not set")
+    
+    typesense_fetcher_host = os.getenv('TYPESENSE_FETCHER_HOST')
+    if not typesense_fetcher_host:
+        raise ValueError("TYPESENSE_FETCHER_HOST environment variable is not set")
+
+
     client = typesense.Client({
         'nodes': [{
-            'host': 'nginx',  
-            'port': '80',       
-            'protocol': 'http',
-            'path': '/api'    
+            'host': typesense_fetcher_host,  
+            'port': typesense_port,       
+            'protocol': typesense_protocol,
+            'path': typesense_path    
         }],
         'api_key': api_key,
         'connection_timeout_seconds': 2
