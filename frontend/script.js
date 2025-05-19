@@ -104,9 +104,12 @@ function displayResults(results) {
         title.className = 'title is-4';
         title.textContent = `${result.document.title_id} - Page ${result.document.page_number}`;
 
-        const sourceTag = document.createElement('span');
+        const sourceTag = document.createElement('a');
         sourceTag.className = 'tag is-info source-tag';
+        sourceTag.href = result.document.remote_path;
+        sourceTag.target = '_blank';
         sourceTag.textContent = result.document.source;
+
 
         titleContainer.appendChild(title);
         titleContainer.appendChild(sourceTag);
@@ -146,10 +149,6 @@ function displayResults(results) {
         const actions = document.createElement('div');
         actions.className = 'field is-grouped mt-4';
 
-        const viewButton = document.createElement('p');
-        viewButton.className = 'control';
-        viewButton.innerHTML = `<a href="${result.document.remote_path}" target="_blank" class="button is-link">View Original</a>`;
-
         const viewFullTextButton = document.createElement('p');
         viewFullTextButton.className = 'control';
         viewFullTextButton.innerHTML = `<button class="button is-link">View Full Text</button>`;
@@ -180,9 +179,8 @@ function displayResults(results) {
         imageButton.className = 'control';
         imageButton.innerHTML = `<a href="${result.document.image_url}" target="_blank" class="button is-link is-light">View Image</a>`;
 
-        actions.appendChild(viewButton);
-        actions.appendChild(imageButton);
         actions.appendChild(viewFullTextButton);
+        actions.appendChild(imageButton);
 
         cardContent.appendChild(titleContainer);
         cardContent.appendChild(snippet);
