@@ -74,10 +74,16 @@ closeButton.onclick = () => {
 const popupContent = document.createElement('div');
 popupContent.id = 'popup-content';
 
-popup.appendChild(closeButton);
 popup.appendChild(popupContent);
+popup.appendChild(closeButton);
 document.body.appendChild(popup);
 
+popup.addEventListener('click', (event) => {
+  if (!popupContent.contains(event.target) && event.target !== closeButton) {
+    popup.style.display = 'none';
+    document.body.style.overflow = 'auto';
+  }
+});
 
 function displayResults(results) {
     const resultsContainer = document.getElementById('results');
