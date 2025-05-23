@@ -17,42 +17,54 @@ def wait_for_healthy(client):
             print(f"Waiting for Typesense service to be healthy: {e}")
         time.sleep(2)
 
-def main():
+def parse_args() -> argparse.Namespace:
+    """
+    Parse command line arguments.
+    :return: Parsed arguments
+    :rtype: argparse.Namespace
+    """
+
     parser = argparse.ArgumentParser(description='Load JSONL data into a Typesense collection.')
+    
     parser.add_argument('jsonl_file', type=str, help='Path to the JSONL file')
     parser.add_argument('--batch-size', type=int, default=256, help='Number of documents to insert in each batch')
     parser.add_argument('--wait-for-healthy', action='store_true', help='Wait for Typesense service to be healthy before inserting data')
+    parser.add_argument('--api-key', type=str, help='Typesense API key', default=os.getenv('TYPESENSE_API_KEY'))
+    parser.add_argument('--typesense-port', type=str, help='Typesense port', default=os.getenv('TYPESENSE_PORT'))
+    parser.add_argument('--typesense-protocol', type=str, help='Typesense protocol', default=os.getenv('TYPESENSE_PROTOCOL'))
+    parser.add_argument('--typesense-path', type=str, help='Typesense path', default=os.getenv('TYPESENSE_PATH'))
+    parser.add_argument('--typesense-fetcher-host', type=str, help='Typesense fetcher host', default=os.getenv('TYPESENSE_FETCHER_HOST'))
     args = parser.parse_args()
 
-    api_key = os.getenv('TYPESENSE_API_KEY')
-    if not api_key:
-        raise ValueError("TYPESENSE_API_KEY environment variable is not set")
+    if not args.api_key:
+        raise ValueError("TYPESENSE_API_KEY environment variable is not set or passed as --api-key")
 
-    typesense_port = os.getenv('TYPESENSE_PORT')
-    if not typesense_port:
-        raise ValueError("TYPESENSE_PORT environment variable is not set")
+    if not args.typesense_port:
+        raise ValueError("TYPESENSE_PORT environment variable is not set or passed as --typesense-port")
+
+    if not args.typesense_protocol:
+        raise ValueError("TYPESENSE_PROTOCOL environment variable is not set or passed as --typesense-protocol")
+
+    if not args.typesense_path:
+        raise ValueError("TYPESENSE_PATH environment variable is not set or passed as --typesense-path")
+
+    if not args.typesense_fetcher_host:
+        raise ValueError("TYPESENSE_FETCHER_HOST environment variable is not set or passed as --typesense-fetcher-host")
+
+    return args
+
+def main():
+
+    args = parse_args()
     
-    typesense_protocol = os.getenv('TYPESENSE_PROTOCOL')
-    if not typesense_protocol:
-        raise ValueError("TYPESENSE_PROTOCOL environment variable is not set")
-
-    typesense_path = os.getenv('TYPESENSE_PATH')
-    if not typesense_path:
-        raise ValueError("TYPESENSE_PATH environment variable is not set")
-    
-    typesense_fetcher_host = os.getenv('TYPESENSE_FETCHER_HOST')
-    if not typesense_fetcher_host:
-        raise ValueError("TYPESENSE_FETCHER_HOST environment variable is not set")
-
-
     client = typesense.Client({
         'nodes': [{
-            'host': typesense_fetcher_host,  
-            'port': typesense_port,       
-            'protocol': typesense_protocol,
-            'path': typesense_path    
+            'host': args.typesense_fetcher_host,
+            'port': args.typesense_port,
+            'protocol': args.typesense_protocol,
+            'path': args.typesense_path
         }],
-        'api_key': api_key,
+        'api_key': args.api_key,
         'connection_timeout_seconds': 2
     })
 
