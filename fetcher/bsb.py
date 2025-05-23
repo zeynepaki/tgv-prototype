@@ -5,12 +5,16 @@ import re
 
 import utils 
 
+SOURCE_ID = "digipress.digitale-sammlungen.de"
+
 class BSBDataSource(DataSource):
     """
     Data source for BSB (Bayerische Staatsbibliothek) IDs.
     """
 
-    def __init__(self, source_id: str, cache_name: str = "devel"):
+    def __init__(self, 
+                 source_id: str = SOURCE_ID, 
+                 cache_name: str = "devel"):
         """
         Initialize the data source
         :param source_id: Source ID for the data source
@@ -67,8 +71,6 @@ class BSBDataSource(DataSource):
 if __name__ == "__main__":
     import argparse
     logging.basicConfig(level=logging.INFO)
-
-    SOURCE_ID = "digipress.digitale-sammlungen.de"
 
     parser = argparse.ArgumentParser(description="Fetch item_ids for a given BSB title_id, via calendar entry point.")
     parser.add_argument("title_id", type=str, help="Title ID to fetch data for.")

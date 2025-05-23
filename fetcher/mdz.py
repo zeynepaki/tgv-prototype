@@ -3,14 +3,19 @@ from datasource import DataSource
 import json
 import logging
 import os
-
 import tqdm
 
 import utils
 
+SOURCE_ID = "api.digitale-sammlungen.de"
+IIIF_MANIFEST_URL = f"https://{SOURCE_ID}" + "/iiif/presentation/v2/{id}/manifest"
+
 class MDZDataSource(DataSource):
 
-    def __init__(self, source_id: str, manifest_url: str, cache_name: str = "devel"):
+    def __init__(self, 
+                 source_id: str = SOURCE_ID, 
+                 manifest_url: str = IIIF_MANIFEST_URL, 
+                 cache_name: str = "devel"):
 
         self.source_id = source_id
         self.manifest_url = manifest_url
@@ -64,9 +69,6 @@ class MDZDataSource(DataSource):
 if __name__ == "__main__":
     import argparse
     logging.basicConfig(level=logging.INFO)
-
-    SOURCE_ID = "api.digitale-sammlungen.de"
-    IIIF_MANIFEST_URL = f"https://{SOURCE_ID}" + "/iiif/presentation/v2/{id}/manifest"
 
     parser = argparse.ArgumentParser(description="Download HOCR files for given item IDs.")
     parser.add_argument("item_id", type=str, help="The item ID to download HOCR files for.")

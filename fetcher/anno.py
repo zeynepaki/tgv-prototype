@@ -1,14 +1,12 @@
 from datasource import DataSource
-from typing import List
 
 import logging
 import os
-
 import tqdm
 
 import utils 
 
-logging.basicConfig(level=logging.INFO)
+SOURCE_ID = "anno.onb.ac.at"
 
 class AnnoDataSource(DataSource):
     """
@@ -88,8 +86,7 @@ class AnnoDataSource(DataSource):
 
 if __name__ == "__main__":
     import argparse
-
-    SOURCE_ID = "anno.onb.ac.at"
+    logging.basicConfig(level=logging.INFO)
 
     parser = argparse.ArgumentParser(description="Fetch text for a given title_id and optional date range.")
     parser.add_argument("title_id", type=str, help="The title ID to fetch data for.")

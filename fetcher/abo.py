@@ -1,21 +1,27 @@
 from datasource import DataSource
-from typing import List, Iterator
 
 import json
 import logging
 import os
 import shutil
-
 import tqdm
 
 import utils
 
+PROJECT_ID = "ABO"
+SOURCE_ID = "iiif.onb.ac.at"
+IIIF_MANIFEST_URL = f"https://{SOURCE_ID}" + "/presentation/{project}/{id}/manifest"
 
 class ABODataSource(DataSource):
     """
-    Data source for fetching IIIF manifests and resources from the Austrian National Library ABO (Austrian Books Online) IIIF service.
+    Data source for fetching IIIF manifests and resources from the 
+    Austrian National Library ABO (Austrian Books Online) IIIF service.
     """
-    def __init__(self, manifest_url: str, project_id: str, source_id: str, cache_name: str = "devel"):
+    def __init__(self, 
+                 source_id: str = SOURCE_ID, 
+                 manifest_url: str = IIIF_MANIFEST_URL, 
+                 project_id: str = PROJECT_ID, 
+                 cache_name: str = "devel"):
         """
         Initialize the data source
 
@@ -25,8 +31,8 @@ class ABODataSource(DataSource):
         :param cache_name: Name of the cache for requests
         """
 
-        self.manifest_url = manifest_url
         self.source_id = source_id
+        self.manifest_url = manifest_url
         self.project_id = project_id
 
         super().__init__(source_id, cache_name)
@@ -97,10 +103,6 @@ class ABODataSource(DataSource):
 if __name__ == "__main__":
     import argparse
     logging.basicConfig(level=logging.INFO)
-
-    PROJECT_ID = "ABO"
-    SOURCE_ID = "iiif.onb.ac.at"
-    IIIF_MANIFEST_URL = f"https://{SOURCE_ID}" + "/presentation/{project}/{id}/manifest"
 
     parser = argparse.ArgumentParser(description="Download HOCR files for given item ID.")
     parser.add_argument("item_id", type=str, help="The item ID to download HOCR files for.")
