@@ -47,6 +47,7 @@ share/python-wheels/
 *.egg
 MANIFEST
 /.idea
+/.conda
 /venv
 .DS_Store
 data.tar
