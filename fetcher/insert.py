@@ -6,9 +6,9 @@ import time
 from tqdm import tqdm
 import typesense
 
-def fetch(client: typesense.Client, wait: bool = False):
+def insert(jsonl_file: str, client: typesense.Client, wait: bool = False, batch_size: int = 256):
     """
-    Fetch data from JSONL file and load it into Typesense collection.
+    Load data from JSONL file and insert it into Typesense collection.
     :param client: Typesense client
     :param wait: Wait for Typesense service to be healthy before inserting data
     """
@@ -40,13 +40,13 @@ def fetch(client: typesense.Client, wait: bool = False):
 
     client.collections.create(schema)
 
-    with open(args.jsonl_file, 'r') as f:
+    with open(jsonl_file, 'r') as f:
         lines = f.readlines()
         batch = []
         for line in tqdm(lines, desc="Loading data"):
             document = json.loads(line)
             batch.append(document)
-            if len(batch) == args.batch_size:
+            if len(batch) == batch_size:
                 client.collections['documents'].documents.import_(batch)
                 batch = []
         if batch:
@@ -158,5 +158,5 @@ if __name__ == '__main__':
         api_key=args.api_key
     )
 
-    fetch(client, wait=args.wait_for_healthy)
-    print("Data loaded into Typesense collection 'documents'.")
+    insert(args.jsonl_file, client, wait=args.wait_for_healthy, batch_size=args.batch_size)
+    print("Data inserted into Typesense collection 'documents'.")
