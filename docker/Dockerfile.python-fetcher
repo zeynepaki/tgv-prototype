@@ -4,15 +4,11 @@ RUN apt-get update && apt-get install -y parallel findutils
 
 WORKDIR /app
 
-COPY ../fetcher /app
-
+COPY ../fetcher/requirements.txt /app/
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
-RUN chmod +x /app/get_items_test.sh
-RUN /app/get_items_test.sh
+COPY ../fetcher /app
 
-RUN find data -type f -name "*.txt" | parallel -j 4 -N 64 --bar python gather.py > all.jsonl
-
-CMD ["sh", "-c", "python -u insert.py all.jsonl --wait-for-healthy --batch-size 8"]
+CMD ["python", "fetcher.py", "sources/items_test.yaml", "--wait-for-healthy", "--batch-size 8"]
 
