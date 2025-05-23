@@ -13,7 +13,9 @@ class AnnoDataSource(DataSource):
     Data source for fetching annotations from the Austrian National Library (ONB) (Austrian Newspapers Online) IIIF service.
     """
 
-    def __init__(self, minimum: int, maximum: str, list_available: bool, source_id: str, cache_name: str = "devel"):
+    def __init__(self,
+                 source_id: str = SOURCE_ID, 
+                 cache_name: str = "devel"):
         """
         Initialize the data source
         
@@ -23,25 +25,26 @@ class AnnoDataSource(DataSource):
         :param cache_name: Name of the cache for requests
         """
 
-        self.min = minimum
-        self.max = maximum
-        self.list_available = list_available
-
         self.base_url = f"https://{source_id}"
         self.text_url = "{base_url}/cgi-content/annoshow?text={title_id}|{datum}|{page_number}"
         self.image_url = "{base_url}/cgi-content/annoshow?call={title_id}|{datum}|{page_number}|{zoom_level}"
 
         super().__init__(source_id=source_id, cache_name=cache_name)
     
-    def fetch(self, title_id: str):
+    def fetch(self, 
+              title_id: str,
+              minimum: int, 
+              maximum: int, 
+              list_available: bool = False):
+        
         valid_datums = self._get_valid_datums(title_id)
-        
-        if self.min:
-            valid_datums = [d for d in valid_datums if d >= self.min]
-        if self.max:
-            valid_datums = [d for d in valid_datums if d <= self.max]
-        
-        if self.list_available:
+
+        if minimum:
+            valid_datums = [d for d in valid_datums if d >= minimum]
+        if maximum:
+            valid_datums = [d for d in valid_datums if d <= maximum]
+
+        if list_available:
             valid_datums.sort()
             for datum in valid_datums:
                 print(datum)
@@ -55,7 +58,7 @@ class AnnoDataSource(DataSource):
         for vd in tqdm.tqdm(valid_datums):
             if vd not in already:
                 path_on_disk = self._get_text_for_datum(title_id, vd, page_number='x')
-                utils.split_anno_x_file(path_on_disk, folder + '/' + vd + '/txt')
+                utils.split_anno_x_file(path_on_disk, f"{folder}/{vd}/txt")
                 utils.delete_file(path_on_disk)
             else:
                 continue
@@ -71,8 +74,8 @@ class AnnoDataSource(DataSource):
             all_ymd_hrefs.extend(h for h in ah if ('datum=' in h))
 
         valid_datums = [utils.get_query_value(u, key='datum') for u in all_ymd_hrefs]
-        
         valid_datums = list(set(valid_datums))
+        valid_datums = [int(d) for d in valid_datums if d.isdigit()]
 
         return valid_datums
 
@@ -90,11 +93,15 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Fetch text for a given title_id and optional date range.")
     parser.add_argument("title_id", type=str, help="The title ID to fetch data for.")
-    parser.add_argument("--min", type=str, help="The minimum date in YYYYMMDD format.", default=None)
-    parser.add_argument("--max", type=str, help="The maximum date in YYYYMMDD format.", default=None)
+    parser.add_argument("--min", type=int, help="The minimum date in YYYYMMDD format.", default=None)
+    parser.add_argument("--max", type=int, help="The maximum date in YYYYMMDD format.", default=None)
     parser.add_argument("--list-available", action="store_true", help="List all valid datums in alphabetical order.")
     
     args = parser.parse_args()
     
-    data_source = AnnoDataSource(minimum=args.min, maximum=args.max, list_available=args.list_available, source_id=SOURCE_ID)
-    data_source.fetch(args.title_id)
+    data_source = AnnoDataSource(source_id=SOURCE_ID)
+    data_source.fetch(
+        args.title_id, 
+        minimum=args.min, 
+        maximum=args.max,
+        list_available=args.list_available)
