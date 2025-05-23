@@ -94,10 +94,11 @@ def parse_args() -> argparse.Namespace:
     """
 
     parser = argparse.ArgumentParser(description='Load JSONL data into a Typesense collection.')
-    parser = add_typesense_args(parser)
+
     parser.add_argument('jsonl_file', type=str, help='Path to the JSONL file')
-    parser.add_argument('--batch-size', type=int, default=256, help='Number of documents to insert in each batch')
-    parser.add_argument('--wait-for-healthy', action='store_true', help='Wait for Typesense service to be healthy before inserting data')
+    parser = add_insert_args(parser)
+    parser = add_typesense_args(parser)
+    
     args = parser.parse_args()
     validate_typesense_args(args)
 
@@ -106,7 +107,15 @@ def parse_args() -> argparse.Namespace:
 
     return args
 
-def add_typesense_args(parser):
+def add_insert_args(parser: argparse.ArgumentParser):
+    """
+    Add args for data insertion
+    """
+    parser.add_argument('--batch-size', type=int, default=256, help='Number of documents to insert in each batch')
+    parser.add_argument('--wait-for-healthy', action='store_true', help='Wait for Typesense service to be healthy before inserting data')
+    return parser
+
+def add_typesense_args(parser: argparse.ArgumentParser):
     """
     Add Typesense-related arguments to the argument parser.
     :param parser: Argument parser
