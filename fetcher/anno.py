@@ -54,14 +54,16 @@ class AnnoDataSource(DataSource):
         os.makedirs(folder, exist_ok=True)
 
         already = utils.list_directories(folder)
+        already = [int(d) for d in already if d.isdigit()]
+        missing = list(set(valid_datums) - set(already))
+
+        if len(missing) == 0:
+            return
         
-        for vd in tqdm.tqdm(valid_datums):
-            if vd not in already:
-                path_on_disk = self._get_text_for_datum(title_id, vd, page_number='x')
-                utils.split_anno_x_file(path_on_disk, f"{folder}/{vd}/txt")
-                utils.delete_file(path_on_disk)
-            else:
-                continue
+        for vd in tqdm.tqdm(missing):
+            path_on_disk = self._get_text_for_datum(title_id, vd, page_number='x')
+            utils.split_anno_x_file(path_on_disk, f"{folder}/{vd}/txt")
+            utils.delete_file(path_on_disk)
 
     def _get_valid_datums(self, title_id: str):
         title_url = self.base_url + f"/cgi-content/anno?apm=0&aid={title_id}"
