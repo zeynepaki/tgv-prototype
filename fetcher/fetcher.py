@@ -82,8 +82,14 @@ def convert_files_to_jsonl(filename: str = 'all.jsonl', batch_size: int = 64, ma
     with ThreadPoolExecutor(max_workers=max_workers) as executor, open(filename, 'w') as outfile:
         futures = [executor.submit(run_gather, batch) for batch in chunked(files, batch_size)]
         for future in as_completed(futures):
-            output = future.result()
-            outfile.writelines(output)
+            try:
+                output = future.result()
+                outfile.writelines(output)
+                logging.info(output[-1][:100]) # log first 100 chars of last entry
+            except Exception as e:
+                logging.error("Error decoding file")
+                logging.error(e)
+                logging.error(e.__traceback__)
 
 
 def parse_args() -> argparse.Namespace:

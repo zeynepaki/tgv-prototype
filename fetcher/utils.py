@@ -94,6 +94,23 @@ def remove_newlines(text):
     return text.replace("\n", "")
 
 def split_anno_x_file(file_path, output_dir):
+    content = read_multi_encoding(file_path)
+    
+    header_pattern = re.compile(r'\[\s*.*?Seite\s*\d+\s*\]')
+
+    pages = header_pattern.split(content)
+    
+    if pages[0].strip() == '':
+        pages.pop(0)
+
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    for i, page in enumerate(pages, start=1):
+        with open(os.path.join(output_dir, f'{i}.txt'), 'w', encoding='utf-8') as output_file:
+            output_file.write(page.strip())
+
+def read_multi_encoding(file_path) -> str:
     encoding = 'utf-8'
     content = None
 
@@ -109,20 +126,13 @@ def split_anno_x_file(file_path, output_dir):
         except Exception as e:
             logging.error(f"Unable to decode file {file_path}.")
             raise e
-    
-    header_pattern = re.compile(r'\[\s*.*?Seite\s*\d+\s*\]')
+        finally:
+            if encoding == 'latin-1' and content:
+                # Re-encode as utf-8
+                content = content.encode("utf-8", errors="replace").decode('utf-8')
+                logging.info(f"Re-encoded {file_path} as utf-8")
 
-    pages = header_pattern.split(content)
-    
-    if pages[0].strip() == '':
-        pages.pop(0)
-
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-
-    for i, page in enumerate(pages, start=1):
-        with open(os.path.join(output_dir, f'{i}.txt'), 'w', encoding='utf-8') as output_file:
-            output_file.write(page.strip())
+    return content
 
 def get_all_hrefs(url, session):
     response = session.get(url)
