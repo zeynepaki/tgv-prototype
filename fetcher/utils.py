@@ -82,13 +82,13 @@ def download_remote_file(url, path, session):
 def delete_file(file_path):
     try:
         os.remove(file_path)
-        print(f"File '{file_path}' deleted successfully.")
+        logging.error(f"File '{file_path}' deleted successfully.")
     except FileNotFoundError:
-        print(f"File '{file_path}' not found.")
+        logging.error(f"File '{file_path}' not found.")
     except PermissionError:
-        print(f"Permission denied to delete '{file_path}'.")
+        logging.error(f"Permission denied to delete '{file_path}'.")
     except Exception as e:
-        print(f"Error deleting file '{file_path}': {e}")
+        logging.error(f"Error deleting file '{file_path}': {e}")
 
 def remove_newlines(text):
     return text.replace("\n", "")
@@ -182,17 +182,17 @@ def main():
 
     if args.command == "extract_hrefs":
         hrefs = extract_hrefs_from_markdown(args.markdown_file)
-        print("\n".join(hrefs))
+        logging.info("\n".join(hrefs))
     elif args.command == "hocr_to_txt":
         hocr_to_txt(args.hocr_file, args.txt_file)
     elif args.command == "convert_all_hocr":
         convert_all_hocr_files(args.input_dir, args.output_dir)
     elif args.command == "list_directories":
         directories = list_directories(args.path)
-        print(directories)
+        logging.info(directories)
     elif args.command == "get_query_value":
         value = get_query_value(args.url, args.key)
-        print(value)
+        logging.info(value)
     elif args.command == "download_remote_file":
         session = requests.Session()
         download_remote_file(args.url, args.path, session)
@@ -202,7 +202,7 @@ def main():
     elif args.command == "get_all_hrefs":
         session = requests.Session()
         hrefs = get_all_hrefs(args.url, session)
-        print(hrefs)
+        logging.info(hrefs)
 
 if __name__ == "__main__":
     main()

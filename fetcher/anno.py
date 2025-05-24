@@ -47,7 +47,7 @@ class AnnoDataSource(DataSource):
         if list_available:
             valid_datums.sort()
             for datum in valid_datums:
-                print(datum)
+                logging.info(datum)
             return
         
         folder = f"data/{self.source_id}/{title_id}"
@@ -61,9 +61,13 @@ class AnnoDataSource(DataSource):
             return
         
         for vd in tqdm.tqdm(missing):
-            path_on_disk = self._get_text_for_datum(title_id, vd, page_number='x')
-            utils.split_anno_x_file(path_on_disk, f"{folder}/{vd}/txt")
-            utils.delete_file(path_on_disk)
+            try:
+                path_on_disk = self._get_text_for_datum(title_id, vd, page_number='x')
+                utils.split_anno_x_file(path_on_disk, f"{folder}/{vd}/txt")
+                utils.delete_file(path_on_disk)
+            except FileNotFoundError as e:
+                logging.error(f"File disappeared while processing {path_on_disk}")
+                logging.error(e)
 
     def _get_valid_datums(self, title_id: str):
         title_url = self.base_url + f"/cgi-content/anno?apm=0&aid={title_id}"
