@@ -1,10 +1,11 @@
 services:
   nginx:
+    image: tgv/nginx
     build:
       context: .
       dockerfile: docker/Dockerfile.nginx
     ports:
-      - "127.0.0.1:80:80"
+      - "127.0.0.1:8100:80"
     environment:
       - TYPESENSE_API_KEY=${TYPESENSE_API_KEY}
       - TYPESENSE_HOST=${TYPESENSE_HOST}
@@ -16,6 +17,7 @@ services:
       - alpha
       
   python-fetcher:
+    image: tgv/fetcher
     build:
       context: .
       dockerfile: docker/Dockerfile.python-fetcher
@@ -25,18 +27,23 @@ services:
       - TYPESENSE_PORT=${TYPESENSE_PORT}
       - TYPESENSE_PROTOCOL=${TYPESENSE_PROTOCOL}
       - TYPESENSE_PATH=${TYPESENSE_PATH}
+    command: ["/bin/sh", "-c", "while true; do python fetcher.py sources/items_all.yaml --wait-for-healthy --batch-size 64; echo 'Sleeping...'; sleep 86400; done"]
+    volumes:
+      - "./data/:/app/data:rw"
     networks:
       - alpha
 
   typesense:
+    image: tgv/typesense
     build:
       context: .
       dockerfile: docker/Dockerfile.typesense
     environment:
       - TYPESENSE_API_KEY=${TYPESENSE_API_KEY}
+    ports:
+      - "0.0.0.0:8108:8108"
     networks:
       - alpha
 
 networks:
   alpha:
-    driver: bridge

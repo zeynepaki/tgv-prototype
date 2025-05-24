@@ -1,0 +1,16 @@
+# Test items for TGV fetcher ingestion
+
+mdz:
+  title_ids:
+    - bsb10616989_00623_u001
+abo:
+  title_ids:
+    - Z251542006
+anno:
+  title_ids:
+    sam:
+      min: 18090101
+      max: 18090501
+    vlb:
+      min: 18080101
+      max: 18080601
