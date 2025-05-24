@@ -1,19 +1,40 @@
-const client = new Typesense.Client({
-  nodes: [{
-    host: '0.0.0.0',
-    port: '8108',
-    protocol: 'http'
-  }],
-  apiKey: 'CHANGE_API_KEY',
-  connectionTimeoutSeconds: 2
-});
+// Typesense Search Client Prototype Script
+// This script is responsible for initializing the Typesense client,
+// handling user input, performing searches, and displaying results.
 
+// Global variables
+let client;
 let currentPage = 1;
 
-document.getElementById('search-box').addEventListener('input', debounce(search, 300));
-document.getElementById('source-filter').addEventListener('change', search);
-document.getElementById('results-per-page').addEventListener('change', search);
+// Popup div consts (hidden by default)
+const popup = document.createElement('div');
+const closeButton = document.createElement('button');
+const popupContent = document.createElement('div');
 
+
+/**
+ * Load the Typesense client configuration from a separate JavaScript file.
+ * This file should export a global variable named TYPESENSE_CLIENT_CONFIG.
+ */
+async function loadConfig() {
+    try {
+        const response = await fetch('/config.js');
+        const scriptText = await response.text();
+        const config = eval(scriptText + '; TYPESENSE_CLIENT_CONFIG;');
+        console.log('Typesense client config loaded:', config);
+        return new Typesense.Client(config);
+    } catch (error) {
+        console.error('Failed to load Typesense client config:', error);
+        throw error;
+    }
+}
+
+
+/**
+ * Debounce function to limit the rate at which a function can be called.
+ * @param {function} func - The function to debounce.
+ * @param {number} wait - The number of milliseconds to wait before calling the function.
+ */
 function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
@@ -26,6 +47,16 @@ function debounce(func, wait) {
     };
 }
 
+
+/**
+ * Perform a search using the Typesense client.
+ * The search is triggered by user input in the search box.
+ * It retrieves the search query, source filter, and results per page 
+ * from the UI, and calls the Typesense client to perform the search.
+ * 
+ * The search function should be debounced on-call to limit the number 
+ * of requests sent to the server.
+ */
 async function search() {
     const query = document.getElementById('search-box').value;
     const sourceFilter = document.getElementById('source-filter').value;
@@ -59,24 +90,27 @@ async function search() {
     }
 }
 
-// Create the popup div (hidden by default)
-const popup = document.createElement('div');
-popup.id = 'text-popup';
 
-const closeButton = document.createElement('button');
-closeButton.textContent = 'X';
-closeButton.className = 'close-button';
-closeButton.onclick = () => {
-    popup.style.display = 'none';
-    document.body.style.overflow = 'auto'; // Re-enable scrolling
-};
+/**
+ * Create a popup for displaying full text results.
+ * The popup is displayed when the user clicks the "View Full Text" button.
+ */
+function createPopup() {
+    popup.id = 'text-popup';
 
-const popupContent = document.createElement('div');
-popupContent.id = 'popup-content';
+    closeButton.textContent = 'X';
+    closeButton.className = 'close-button';
+    closeButton.onclick = () => {
+        popup.style.display = 'none';
+        document.body.style.overflow = 'auto'; // Re-enable scrolling
+    };
 
-popup.appendChild(popupContent);
-popup.appendChild(closeButton);
-document.body.appendChild(popup);
+    popupContent.id = 'popup-content';
+
+    popup.appendChild(closeButton);
+    popup.appendChild(popupContent);
+    document.body.appendChild(popup);
+}
 
 popup.addEventListener('click', (event) => {
   if (!popupContent.contains(event.target) && event.target !== closeButton) {
@@ -85,6 +119,13 @@ popup.addEventListener('click', (event) => {
   }
 });
 
+/**
+ * Display the search results in the UI.
+ * It creates a card for each result, showing the title, snippet, and action buttons.
+ * The results are displayed in a container with pagination.
+ * @param {object} results - The search results from Typesense.
+ * @returns 
+ */
 function displayResults(results) {
     const resultsContainer = document.getElementById('results');
     resultsContainer.innerHTML = '';
@@ -197,6 +238,14 @@ function displayResults(results) {
 }
 
 
+/**
+ * Function which displays pagination controls based on the total number of results and results per page.
+ * It creates "Previous" and "Next" buttons to navigate through the pages.
+ * The buttons are disabled when the user is on the first or last page.
+ * @param {int} total 
+ * @param {int} perPage 
+ * @returns 
+ */
 function displayPagination(total, perPage) {
     const totalPages = Math.ceil(total / perPage);
     const pagination = document.getElementById('pagination');
@@ -231,3 +280,27 @@ function displayPagination(total, perPage) {
     nav.appendChild(nextButton);
     pagination.appendChild(nav);
 }
+
+
+/**
+ * "Main" function
+ * Runs when the DOM is fully loaded.
+ * It initializes the Typesense client, sets up event listeners for the search box,
+ * source filter, and results per page dropdowns.
+ * It also creates the popup for displaying full text results.
+ */
+document.addEventListener("DOMContentLoaded", function(event) { 
+    
+    loadConfig().then(tsClient => {
+        client = tsClient;
+        console.log('Typesense client initialized');
+    });
+
+    document.getElementById('search-box').addEventListener('input', debounce(search, 300));
+    document.getElementById('source-filter').addEventListener('change', search);
+    document.getElementById('results-per-page').addEventListener('change', search);
+    console.log('Event listeners registered');
+
+    createPopup();
+    console.log('Popup created');
+});

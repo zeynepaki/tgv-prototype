@@ -1,0 +1,10 @@
+ARG TYPESENSE_VERSION=27.1
+
+FROM typesense/typesense:${TYPESENSE_VERSION}
+
+ARG TYPESENSE_DATA_DIR=/data
+ENV TYPESENSE_DATA_DIR=${TYPESENSE_DATA_DIR}
+
+RUN mkdir -p ${TYPESENSE_DATA_DIR}
+
+CMD ["typesense-server", "--data-dir", "/data", "--api-key ${TYPESENSE_API_KEY}"]

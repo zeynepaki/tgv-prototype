@@ -1,0 +1,14 @@
+FROM python:3.10.13
+
+RUN apt-get update && apt-get install -y parallel findutils
+
+WORKDIR /app
+
+COPY ../fetcher/requirements.txt /app/
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY ../fetcher /app
+
+CMD ["python", "fetcher.py", "sources/items_test.yaml", "--wait-for-healthy", "--batch-size 8"]
+

@@ -1,16 +1,45 @@
-version: '3.7'
-
 services:
-  typesense:
-    image: typesense/typesense:27.1
-    restart: on-failure
+  nginx:
+    image: tgv/nginx
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.nginx
     ports:
-      - "8108:8108"
+      - "127.0.0.1:8100:80"
+    env_file:
+      - .env
+    networks:
+      - alpha
+      
+  python-fetcher:
+    image: tgv/fetcher
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.python-fetcher
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 2G
+    env_file:
+      - .env
+    command: ["/bin/sh", "-c", "while true; do python fetcher.py sources/items_all.yaml --wait-for-healthy --batch-size 128; echo 'Sleeping...'; sleep 86400; done"]
     volumes:
-      - ./typesense-data:/data
+      - "./data/:/app/data:rw"
+    networks:
+      - alpha
+
+  typesense:
+    image: tgv/typesense
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.typesense
     environment:
-      - TYPESENSE_API_KEY
-    command: >
-      --data-dir /data
-      --api-key=${TYPESENSE_API_KEY}
-      --enable-cors
+      - TYPESENSE_API_KEY=${TYPESENSE_API_KEY}
+    ports:
+      - "127.0.0.1:8108:8108"
+    networks:
+      - alpha
+
+networks:
+  alpha:

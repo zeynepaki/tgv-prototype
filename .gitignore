@@ -13,6 +13,12 @@ data/
 # any JSONL files produced before insert
 *.jsonl
 
+# .env file 
+.env
+
+# VSCode project specific settings
+.vscode/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -41,6 +47,7 @@ share/python-wheels/
 *.egg
 MANIFEST
 /.idea
+/.conda
 /venv
 .DS_Store
 data.tar

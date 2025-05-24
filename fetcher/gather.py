@@ -24,9 +24,7 @@ def process_anno_onb_ac_at(file_path):
     remote_path = TEXT_URL.format(title_id=title_id, datum=datum, page_number=page_number)
     image_url = IMAGE_URL.format(title_id=title_id, datum=datum, page_number=page_number, zoom_level='1')
 
-    with open(file_path, 'r') as file:
-        ocr_text = file.read()
-
+    ocr_text = utils.read_multi_encoding(file_path)
     ocr_text_stripped = utils.remove_newlines(ocr_text)
 
     return {

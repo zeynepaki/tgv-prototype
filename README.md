@@ -6,15 +6,15 @@ A prototype application to support TGV bid
 
 The project consists of three parts
 
-- a set of scripts to get OCR data and related metadata from a variety of holding libraries
-- scripts to populate a search backend using Typesense
-- a demo frontend against the Typesense API.
+- a set of scripts to get OCR data and related metadata from a variety of holding libraries (in `fetcher/`)
+- scripts to populate a search backend using Typesense (`fetcher/insert.py`)
+- a demo frontend against the Typesense API  (`frontend/`)
 
-It is supported by a number of utility functions.
+It is supported by a number of utility functions (`fetcher/utils.py`)
 
 Most functionality in the Python scripts can be used either as a module or from the command-line.
 
-Typesense hostname, port, and API key needs to be set across a number of scripts.
+It is accompanied by files which specify a containerised application, split over `./compose.yml` and the Dockerfiles in `docker/`.
 
 ### Data and metadata retrieval 
 
@@ -34,7 +34,7 @@ We used `requests_cache` during development to help reduce the number of request
 
 Requires a working installation of Typesense. A `compose.yml` to use with e.g. Docker Compose is provided for convenience.
 
-`insert.py` deletes any exisiting Typesense collection, creates a new one, and inserts the documents from the JSON file into the search backend.
+`insert.py` deletes any existing Typesense collection, creates a new one, and inserts the documents from the JSON file into the search backend.
 
 ### Search frontend
 
@@ -44,39 +44,81 @@ I include a very simple demonstration (thanks to Copilot for Business) of how Ty
 
 ### Install/Setup
 
-1. Create a `virtualenv` (tested with Python 3.10.13) and install Python dependencies in `requirements.txt`
-2. Activate the virtual environment
-3. Set the shell environment variable `TYPESENSE_API_KEY` to a strong secret
-4. Run `docker-compose up` from the root of the project directory
-5. (if using) Change the API key in `frontend/index.html` to match the strong secret
-6. (if using) Serve the frontend from the root of `./frontend`
+0. Create a `.env` file (see samples below)
+1. Run `docker-compose up` from the root of the project directory
+2. Visit application at localhost:80
 
-### Retrieve
+### Development 
 
-Use the scripts `anno.py`, `mdz.py`, and `abo.py` to retrieve data from these sources. The data will be in `data`. Each `.txt` file corresponds to a page of a source.
+Some useful commands
 
-To replicate the corpus from the original study, run the commands in `get_items.sh`. 
+- `docker-compose build --no-cache [SERVICE_NAME]` to rebuild images from scratch
+- `docker-compose up --recreate [SERVICE_NAME]` to start application and/or individual services (and their dependencies), recreating the containers without rebuilding the images. Useful if `compose.yml` has changed.
 
-It should be fine to work with a small subset of these for development purposes. To get a smaller corpus for testing purposes, run the commands in `get_items_test.sh`.
+It is important to keep track of when environment variables are being "injected" into the application. Sometimes it is done during the image build and other times it is done during runtime.
 
-Alternatively, the pre-downloaded corpus can be found on Teams/OneDrive (untar into `./data`).
-
-### Gather
-
-Once all sources are downloaded, run `gather.py`, which takes as argument(s) a path to a text. 
-
-I use GNU Parallel to quickly do this e.g. (from the project root directory):
+#### Sample `.env` file for local testing
 
 ```bash
-find data -type f -name "*.txt" | parallel -j 4 -N 64 --bar python gather.py > all.jsonl
+TYPESENSE_API_KEY=
+# The hostname for typesense as viewed by the frontend
+TYPESENSE_HOST=localhost
+# The hostname for typesense as viewed by ngnix (working as a reverse proxy within the Docker network)
+TYPESENSE_UPSTREAM_HOST=typesense
+# The hostname for typesense as viewed by the python-fetcher service (which goes via the reverse proxy)
+TYPESENSE_FETCHER_HOST=nginx
+TYPESENSE_PORT=80
+TYPESENSE_PROTOCOL=http
+TYPESENSE_PATH="/api"
+
 ```
 
-We do this because later on we might like to "enrich" the records with various bits of post-processing unrelated to their collection.
+#### Sample `.env` file for deployment to AWH
 
-### Insert
-
-Finally, use `insert.py`, which takes a path to a newline-delimited JSONL file and inserts each record into the running Typesense instance. For example,
+UNTESTED!
 
 ```bash
-python insert.py all.jsonl
+TYPESENSE_API_KEY=
+TYPESENSE_HOST=
+TYPESENSE_UPSTREAM_HOST=localhost
+TYPESENSE_FETCHER_HOST=localhost
+TYPESENSE_PORT=80
+TYPESENSE_PROTOCOL=https
+TYPESENSE_PATH="/api"
 ```
+
+#### Fetching and loading the full corpus
+
+Currently, the application fetches, gathers, and loads a very small sample of the total corpus, which is useful for testing purposes. To load the full corpus, make changes to `docker/Dockerfile.python-fetcher` so that it resembles the below:
+
+```dockerfile
+...
+RUN chmod +x /app/get_items.sh
+RUN /app/get_items.sh
+...
+```
+
+## Design
+
+There are three services defined in compose.yml:
+
+- `nginx`
+- `python-fetcher`
+- `typesense`
+
+`nginx` hosts the frontend and reverse proxies `/api` to `/` in `typesense`. 
+
+The frontend served by `nginx` needs to have an API key to authenticate requests to `typesense` (which also needs to know this API key when launched). This is all arranged in the relevant Dockerfiles, and uses key-value pairs set in `.env` (which is not checked into source control). 
+
+`typesense` is the database and is available over HTTP within the docker network `alpha` (this is largely irrelevant for now).
+
+`python-fetcher` retrieves the data, post-processes it and produces an image containing the data in JSONL format. Every time the container is launched, it inserts the documents from this JSONL file into `typesense` via HTTP. It deletes any existing collections before doing so.
+
+### Notes for deployment to AWH
+
+There are some things to note before deployment to AHW given the "sidecar" pattern:
+
+- `fetcher/insert.py` assumes that the database (Typesense) is available at `nginx` (hard-coded for the moment)
+- `frontend` assumes that the database API is available at `${TYPESENSE_HOST}:${TYPESENSE_PORT}` under `${TYPESENSE_PATH}` (typically `/api`)
+- `nginx` assumes that `typesense` makes its HTTP API available at on `$TYPESENSE_UPSTREAM_HOST}` at port 8081, which is referenced in `nginx.conf`
+    - This implies that `TYPESENSE_UPSTREAM_HOST` needs changing when deploying to AHW 
