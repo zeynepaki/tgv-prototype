@@ -94,9 +94,22 @@ def remove_newlines(text):
     return text.replace("\n", "")
 
 def split_anno_x_file(file_path, output_dir):
-    with open(file_path, 'r', encoding='utf-8') as file:
-        content = file.read()
+    encoding = 'utf-8'
+    content = None
 
+    while not content:
+        try:
+            with open(file_path, 'r', encoding=encoding) as file:
+                content = file.read()
+        except UnicodeDecodeError as e:
+            logging.error(e)
+            logging.error(f"File {file_path} does not appear to be UTF-8 encoded. Trying 'latin-1'...")
+            encoding = 'latin-1' # Try 'latin-1' encoding instead!
+            continue
+        except Exception as e:
+            logging.error(f"Unable to decode file {file_path}.")
+            raise e
+    
     header_pattern = re.compile(r'\[\s*.*?Seite\s*\d+\s*\]')
 
     pages = header_pattern.split(content)
