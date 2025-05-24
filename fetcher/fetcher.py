@@ -110,6 +110,9 @@ def parse_args() -> argparse.Namespace:
     
     parser.add_argument('yaml_file', type=str, help='Path to the YAML file to configure sources')
     parser.add_argument('--jsonl_file', type=str, default='data/all.jsonl', help='Path to the JSONL file to write and use')
+    parser.add_argument('--skip-gather', action='store_true', help='Do not gather JSONL file from .txt files')
+    parser.add_argument('--skip-fetch', action='store_true', help='Do not download source data from repositories')
+    parser.add_argument('--skip-insert', action='store_true', help='Do not insert values into typesense')
    
     parser = insert.add_insert_args(parser)
     parser = insert.add_typesense_args(parser)
@@ -119,14 +122,20 @@ def parse_args() -> argparse.Namespace:
 
     return args
 
-if __name__ == '__main__':
+def main():
     logging.basicConfig(level=logging.INFO)
 
     args = parse_args()
 
-    get_items(args.yaml_file)
-    convert_files_to_jsonl(filename=args.jsonl_file, batch_size=args.batch_size)
+    if not args.skip_fetch:
+        get_items(args.yaml_file)
 
+    if not args.skip_gather:
+        convert_files_to_jsonl(filename=args.jsonl_file, batch_size=args.batch_size)
+
+    if args.skip_insert:
+        return
+    
     client = insert.create_typesense_client(
         host=args.typesense_fetcher_host,
         port=args.typesense_port,
@@ -142,3 +151,5 @@ if __name__ == '__main__':
         batch_size=args.batch_size
     )
 
+if __name__ == '__main__':
+    main()
