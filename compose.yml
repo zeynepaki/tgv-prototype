@@ -6,13 +6,8 @@ services:
       dockerfile: docker/Dockerfile.nginx
     ports:
       - "127.0.0.1:8100:80"
-    environment:
-      - TYPESENSE_API_KEY=${TYPESENSE_API_KEY}
-      - TYPESENSE_HOST=${TYPESENSE_HOST}
-      - TYPESENSE_UPSTREAM_HOST=${TYPESENSE_UPSTREAM_HOST}
-      - TYPESENSE_PORT=${TYPESENSE_PORT}
-      - TYPESENSE_PROTOCOL=${TYPESENSE_PROTOCOL}
-      - TYPESENSE_PATH=${TYPESENSE_PATH}
+    env_file:
+      - .env
     networks:
       - alpha
       
@@ -21,13 +16,14 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.python-fetcher
-    environment:
-      - TYPESENSE_API_KEY=${TYPESENSE_API_KEY}
-      - TYPESENSE_FETCHER_HOST=${TYPESENSE_FETCHER_HOST}
-      - TYPESENSE_PORT=${TYPESENSE_PORT}
-      - TYPESENSE_PROTOCOL=${TYPESENSE_PROTOCOL}
-      - TYPESENSE_PATH=${TYPESENSE_PATH}
-    command: ["/bin/sh", "-c", "while true; do python fetcher.py sources/items_all.yaml --wait-for-healthy --batch-size 64; echo 'Sleeping...'; sleep 86400; done"]
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 2G
+    env_file:
+      - .env
+    command: ["/bin/sh", "-c", "while true; do python fetcher.py sources/items_all.yaml --wait-for-healthy --batch-size 128; echo 'Sleeping...'; sleep 86400; done"]
     volumes:
       - "./data/:/app/data:rw"
     networks:
@@ -41,7 +37,7 @@ services:
     environment:
       - TYPESENSE_API_KEY=${TYPESENSE_API_KEY}
     ports:
-      - "0.0.0.0:8108:8108"
+      - "127.0.0.1:8108:8108"
     networks:
       - alpha
 
