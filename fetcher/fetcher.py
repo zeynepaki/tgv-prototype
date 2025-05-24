@@ -1,7 +1,6 @@
 import argparse
 import logging
 import json
-import os
 import yaml
 import glob
 
@@ -67,7 +66,7 @@ def run_gather(batch):
     return lines
 
 
-def convert_files_to_jsonl(filename: str = 'all.jsonl', batch_size: int = 64, max_workers: int = 4):
+def convert_files_to_jsonl(filename: str = 'data/all.jsonl', batch_size: int = 64, max_workers: int = 4):
     """
       Find all .txt files under 'data' directory and save them to all.jsonl
         in chunks of 64 files.
@@ -83,21 +82,21 @@ def convert_files_to_jsonl(filename: str = 'all.jsonl', batch_size: int = 64, ma
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor, open(filename, 'w') as outfile:
         futures = [executor.submit(run_gather, batch) for batch in chunked(files, batch_size)]
-        for future in as_completed(futures):
+        for future in tqdm(as_completed(futures), total=len(futures), desc="Converting JSONL"):
             try:
                 output = future.result()
                 outfile.writelines(output)
                 
                 total = total - batch_size if total > batch_size else 0
-                logging.info(output[-1][:120]) # log first 120 chars of last entry
-                logging.info(f"{total} files remaining...")
-
+                logging.debug(output[-1][:120]) # log first 120 chars of last entry
+                logging.info(f"{len(files)-total}/{len(files)} files")
+                
             except Exception as e:
                 logging.error("Error converting file")
                 logging.error(e)
                 logging.error(e.__traceback__)
-        
-    logging.info(f"{len(files)} files successfully converted to {filename}")
+
+    logging.info(f"{len(files)} files gathered into {filename}")
 
 
 def parse_args() -> argparse.Namespace:
@@ -110,7 +109,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='Download data, parse, and insert into a Typesense collection.')
     
     parser.add_argument('yaml_file', type=str, help='Path to the YAML file to configure sources')
-    parser.add_argument('--jsonl_file', type=str, default='fetcher.jsonl', help='Path to the JSONL file to write and use')
+    parser.add_argument('--jsonl_file', type=str, default='data/all.jsonl', help='Path to the JSONL file to write and use')
    
     parser = insert.add_insert_args(parser)
     parser = insert.add_typesense_args(parser)
