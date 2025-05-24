@@ -82,21 +82,20 @@ def download_remote_file(url, path, session):
 def delete_file(file_path):
     try:
         os.remove(file_path)
-        print(f"File '{file_path}' deleted successfully.")
+        logging.error(f"File '{file_path}' deleted successfully.")
     except FileNotFoundError:
-        print(f"File '{file_path}' not found.")
+        logging.error(f"File '{file_path}' not found.")
     except PermissionError:
-        print(f"Permission denied to delete '{file_path}'.")
+        logging.error(f"Permission denied to delete '{file_path}'.")
     except Exception as e:
-        print(f"Error deleting file '{file_path}': {e}")
+        logging.error(f"Error deleting file '{file_path}': {e}")
 
 def remove_newlines(text):
     return text.replace("\n", "")
 
 def split_anno_x_file(file_path, output_dir):
-    with open(file_path, 'r', encoding='utf-8') as file:
-        content = file.read()
-
+    content = read_multi_encoding(file_path)
+    
     header_pattern = re.compile(r'\[\s*.*?Seite\s*\d+\s*\]')
 
     pages = header_pattern.split(content)
@@ -110,6 +109,30 @@ def split_anno_x_file(file_path, output_dir):
     for i, page in enumerate(pages, start=1):
         with open(os.path.join(output_dir, f'{i}.txt'), 'w', encoding='utf-8') as output_file:
             output_file.write(page.strip())
+
+def read_multi_encoding(file_path) -> str:
+    encoding = 'utf-8'
+    content = None
+
+    while not content:
+        try:
+            with open(file_path, 'r', encoding=encoding) as file:
+                content = file.read()
+        except UnicodeDecodeError as e:
+            logging.error(e)
+            logging.error(f"File {file_path} does not appear to be UTF-8 encoded. Trying 'latin-1'...")
+            encoding = 'latin-1' # Try 'latin-1' encoding instead!
+            continue
+        except Exception as e:
+            logging.error(f"Unable to decode file {file_path}.")
+            raise e
+        finally:
+            if encoding == 'latin-1' and content:
+                # Re-encode as utf-8
+                content = content.encode("utf-8", errors="replace").decode('utf-8')
+                logging.info(f"Re-encoded {file_path} as utf-8")
+
+    return content
 
 def get_all_hrefs(url, session):
     response = session.get(url)
@@ -159,17 +182,17 @@ def main():
 
     if args.command == "extract_hrefs":
         hrefs = extract_hrefs_from_markdown(args.markdown_file)
-        print("\n".join(hrefs))
+        logging.info("\n".join(hrefs))
     elif args.command == "hocr_to_txt":
         hocr_to_txt(args.hocr_file, args.txt_file)
     elif args.command == "convert_all_hocr":
         convert_all_hocr_files(args.input_dir, args.output_dir)
     elif args.command == "list_directories":
         directories = list_directories(args.path)
-        print(directories)
+        logging.info(directories)
     elif args.command == "get_query_value":
         value = get_query_value(args.url, args.key)
-        print(value)
+        logging.info(value)
     elif args.command == "download_remote_file":
         session = requests.Session()
         download_remote_file(args.url, args.path, session)
@@ -179,7 +202,7 @@ def main():
     elif args.command == "get_all_hrefs":
         session = requests.Session()
         hrefs = get_all_hrefs(args.url, session)
-        print(hrefs)
+        logging.info(hrefs)
 
 if __name__ == "__main__":
     main()
