@@ -10,7 +10,7 @@ services:
       - .env
     networks:
       - alpha
-      
+
   python-fetcher:
     image: tgv/fetcher
     build:
@@ -36,6 +36,8 @@ services:
       dockerfile: docker/Dockerfile.typesense
     environment:
       - TYPESENSE_API_KEY=${TYPESENSE_API_KEY}
+    volumes:
+      - "./typesense-data/:/data:rw"
     ports:
       - "127.0.0.1:8108:8108"
     networks:
