@@ -121,9 +121,9 @@ def add_typesense_args(parser: argparse.ArgumentParser):
     :param parser: Argument parser
     """
     parser.add_argument('--api-key', type=str, help='Typesense API key', default=os.getenv('TYPESENSE_API_KEY'))
-    parser.add_argument('--typesense-port', type=str, help='Typesense port', default=os.getenv('TYPESENSE_PORT'))
-    parser.add_argument('--typesense-protocol', type=str, help='Typesense protocol', default=os.getenv('TYPESENSE_PROTOCOL'))
-    parser.add_argument('--typesense-path', type=str, help='Typesense path', default=os.getenv('TYPESENSE_PATH'))
+    parser.add_argument('--typesense-port', type=str, help='Typesense port', default=os.getenv('TYPESENSE_FETCHER_PORT'))
+    parser.add_argument('--typesense-protocol', type=str, help='Typesense protocol', default=os.getenv('TYPESENSE_FETCHER_PROTOCOL'))
+    parser.add_argument('--typesense-path', type=str, help='Typesense path', default=os.getenv('TYPESENSE_FETCHER_PATH'))
     parser.add_argument('--typesense-fetcher-host', type=str, help='Typesense fetcher host', default=os.getenv('TYPESENSE_FETCHER_HOST'))
 
     return parser
@@ -137,11 +137,11 @@ def validate_typesense_args(args):
     if not args.api_key:
         raise ValueError("TYPESENSE_API_KEY environment variable is not set or passed as --api-key")
     if not args.typesense_port:
-        raise ValueError("TYPESENSE_PORT environment variable is not set or passed as --typesense-port")
+        raise ValueError("TYPESENSE_FETCHER_PORT environment variable is not set or passed as --typesense-port")
     if not args.typesense_protocol:
-        raise ValueError("TYPESENSE_PROTOCOL environment variable is not set or passed as --typesense-protocol")
+        raise ValueError("TYPESENSE_FETCHER_PROTOCOL environment variable is not set or passed as --typesense-protocol")
     if not args.typesense_path:
-        raise ValueError("TYPESENSE_PATH environment variable is not set or passed as --typesense-path")
+        raise ValueError("TYPESENSE_FETCHER_PATH environment variable is not set or passed as --typesense-path")
     if not args.typesense_fetcher_host:
         raise ValueError("TYPESENSE_FETCHER_HOST environment variable is not set or passed as --typesense-fetcher-host")
 
