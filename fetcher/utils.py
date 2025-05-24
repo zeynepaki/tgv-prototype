@@ -114,7 +114,7 @@ def read_multi_encoding(file_path) -> str:
     encoding = 'utf-8'
     content = None
 
-    while not content:
+    while content is None:
         try:
             with open(file_path, 'r', encoding=encoding) as file:
                 content = file.read()
@@ -130,7 +130,7 @@ def read_multi_encoding(file_path) -> str:
             if encoding == 'latin-1' and content:
                 # Re-encode as utf-8
                 content = content.encode("utf-8", errors="replace").decode('utf-8')
-                logging.info(f"Re-encoded {file_path} as utf-8")
+                logging.info(f"Re-encoded {file_path} as utf-8. Content may not be accurate.")
 
     return content
 
