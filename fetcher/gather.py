@@ -22,7 +22,7 @@ def process_anno_onb_ac_at(file_path):
     page_number = parts[-1].split('.')[0]
 
     remote_path = TEXT_URL.format(title_id=title_id, datum=datum, page_number=page_number)
-    image_url = IMAGE_URL.format(title_id=title_id, datum=datum, page_number=page_number, zoom_level='1')
+    image_url = IMAGE_URL.format(title_id=title_id, datum=datum, page_number=page_number, zoom_level='100')
 
     ocr_text = utils.read_multi_encoding(file_path)
     ocr_text_stripped = utils.remove_newlines(ocr_text)
@@ -60,7 +60,7 @@ def process_api_digitale_sammlungen_de(file_path):
                 remote_path = canvas['seeAlso']['@id']
                 for image in canvas['images']:
                     original_image_url = image['resource']['@id']
-                    image_url = original_image_url.replace('/full/full/', '/full/,300/')
+                    image_url = original_image_url.replace('/full/full/', '/full/2400,/')
                     break
     
     with open(file_path, 'r') as file:
@@ -106,7 +106,7 @@ def process_iiif_onb_ac_at(file_path):
                             break
                 for image in canvas['images']:
                     original_image_url = image['resource']['@id']
-                    image_url = original_image_url.replace('/full/full/', '/full/,300/')
+                    image_url = original_image_url.replace('/full/full/', '/full/,2400/')
                     break
 
     with open(file_path, 'r') as file:
