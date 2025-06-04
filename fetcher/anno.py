@@ -92,6 +92,41 @@ class AnnoDataSource(DataSource):
         utils.download_remote_file(vd_uri, path=path_on_disk, session=self.session)
         return path_on_disk
 
+    @staticmethod
+    def process(file_path, data_directory):
+        SOURCE_ID = "anno.onb.ac.at"
+        TEXT_URL = "https://anno.onb.ac.at/cgi-content/annoshow?text={title_id}|{datum}|{page_number}"
+        IMAGE_URL= "https://anno.onb.ac.at/cgi-content/annoshow?call={title_id}|{datum}|{page_number}|{zoom_level}"
+
+        TITLE_MAP = {
+            'sam': 'Der Sammler. Ein Unterhaltungsblatt',
+            'vlb': 'Vaterländische Blätter'
+        }
+
+        parts = file_path.split(os.sep)
+        title_id = parts[2]
+        datum = parts[3]
+        page_number = parts[-1].split('.')[0]
+
+        remote_path = TEXT_URL.format(title_id=title_id, datum=datum, page_number=page_number)
+        image_url = IMAGE_URL.format(title_id=title_id, datum=datum, page_number=page_number, zoom_level='100')
+
+        ocr_text = utils.read_multi_encoding(file_path)
+        ocr_text_stripped = utils.remove_newlines(ocr_text)
+
+        return {
+            "local_path": file_path,
+            "source": SOURCE_ID,
+            "title_id": title_id,
+            "title_full": TITLE_MAP[title_id],
+            "datum": datum,
+            "page_number": page_number,
+            "remote_path": remote_path,
+            "image_url": image_url,
+            "ocr_text_original": ocr_text,
+            "ocr_text_stripped": ocr_text_stripped,
+        }
+
 
 if __name__ == "__main__":
     import argparse

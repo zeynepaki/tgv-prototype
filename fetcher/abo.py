@@ -99,6 +99,52 @@ class ABODataSource(DataSource):
                             
                             logging.debug(f"Downloaded {extension.upper()} file for {label} to {filename}")
 
+    @staticmethod
+    def process(file_path, data_directory):
+        SOURCE_ID = "iiif.onb.ac.at"
+
+        parts = file_path.split(os.sep)
+        title_id = parts[3]
+        project_id = parts[2]
+        label = parts[-1].split('.')[0]
+        
+        with open(os.path.join(data_directory, SOURCE_ID, project_id, title_id, 'json', 'manifest.json'), 'r', encoding='utf-8') as file:
+            manifest = json.load(file)
+        
+        title_full = manifest['label']
+
+        remote_path = None
+        image_url = None
+        for sequence in manifest['sequences']:
+            for canvas in sequence['canvases']:
+                if label == canvas['label']:
+                    for content in canvas.get('otherContent', []):
+                        for resource in content.get('resources', []):
+                            if resource['resource']['format'] == 'text/plain':
+                                remote_path = resource['resource']['@id']
+                                break
+                    for image in canvas['images']:
+                        original_image_url = image['resource']['@id']
+                        image_url = original_image_url.replace('/full/full/', '/full/,2400/')
+                        break
+
+        with open(file_path, 'r') as file:
+            ocr_text = file.read()
+
+        ocr_text_stripped = utils.remove_newlines(ocr_text)
+
+        return {
+            "local_path": file_path,
+            "source": SOURCE_ID,
+            "title_id": title_id,
+            "title_full": title_full,
+            "page_number": label,
+            "remote_path": remote_path,
+            "image_url": image_url,
+            "ocr_text_original": ocr_text,
+            "ocr_text_stripped": ocr_text_stripped,
+        }
+    
 
 if __name__ == "__main__":
     import argparse
