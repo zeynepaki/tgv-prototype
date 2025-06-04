@@ -1,6 +1,7 @@
 services:
   nginx:
     image: tgv/nginx
+    restart: on-failure
     build:
       context: .
       dockerfile: docker/Dockerfile.nginx
@@ -13,6 +14,7 @@ services:
 
   python-fetcher:
     image: tgv/fetcher
+    restart: on-failure
     build:
       context: .
       dockerfile: docker/Dockerfile.python-fetcher
@@ -31,6 +33,7 @@ services:
 
   typesense:
     image: tgv/typesense
+    restart: on-failure
     build:
       context: .
       dockerfile: docker/Dockerfile.typesense

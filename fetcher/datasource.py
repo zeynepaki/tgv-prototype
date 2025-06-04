@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import Any, Iterator, List
 
 import requests_cache
 
@@ -21,5 +20,13 @@ class DataSource(ABC):
     def fetch(self, item_id: str):
         """
         Fetch data from the data source based on an item_id query.
+        """
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def process(file_path: str, data_directory: str):
+        """
+        Process data from a data file based on an item_id query.
         """
         pass
