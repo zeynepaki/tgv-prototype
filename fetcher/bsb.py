@@ -66,6 +66,10 @@ class BSBDataSource(DataSource):
         dedup_item_hrefs = list(set(all_item_hrefs))
         hrefs = [self._extract_bsb_id(href) for href in dedup_item_hrefs]
         return [h for h in hrefs if h is not None]
+    
+    @staticmethod
+    def process(file_path, data_directory):
+        pass
 
 
 if __name__ == "__main__":
