@@ -94,7 +94,7 @@ class MDZDataSource(DataSource):
             ocr_text = file.read()
 
         ocr_text_stripped = utils.remove_newlines(ocr_text)
-        print('.')
+
         return {
             "local_path": file_path,
             "source": SOURCE_ID,
